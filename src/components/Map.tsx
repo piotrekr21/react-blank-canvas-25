@@ -180,20 +180,18 @@ export const Map = ({ onLocationSelect, initialCenter = defaultCenter, zoom = 8 
         </div>
       )}
 
-      <div className="relative">
-        <div className="absolute top-4 left-4 right-4 z-10">
-          <StandaloneSearchBox
-            onLoad={onSearchBoxLoad}
-            onPlacesChanged={handlePlacesChanged}
-          >
-            <Input
-              type="text"
-              placeholder="Search for a location..."
-              className="w-full bg-white shadow-lg"
-            />
-          </StandaloneSearchBox>
-        </div>
+      <StandaloneSearchBox
+        onLoad={onSearchBoxLoad}
+        onPlacesChanged={handlePlacesChanged}
+      >
+        <Input
+          type="text"
+          placeholder="Search for a location..."
+          className="w-full bg-white shadow-lg mb-4"
+        />
+      </StandaloneSearchBox>
 
+      <div className="relative">
         <GoogleMap
           mapContainerStyle={mapContainerStyle}
           zoom={zoom}
