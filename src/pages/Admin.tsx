@@ -37,38 +37,61 @@ const Admin = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Check if user is admin
   useEffect(() => {
     const checkAdminStatus = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        navigate("/login");
-        return;
-      }
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          navigate("/login");
+          return;
+        }
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", session.user.id)
-        .single();
+        const { data: profile, error } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", session.user.id)
+          .maybeSingle();
 
-      if (profile?.role !== "admin") {
-        navigate("/");
+        if (error) {
+          console.error("Error fetching profile:", error);
+          toast({
+            title: "Error",
+            description: "Failed to verify admin status",
+            variant: "destructive",
+          });
+          navigate("/");
+          return;
+        }
+
+        if (!profile || profile.role !== "admin") {
+          toast({
+            title: "Access Denied",
+            description: "You don't have permission to access this page",
+            variant: "destructive",
+          });
+          navigate("/");
+        } else {
+          setIsAdmin(true);
+        }
+      } catch (error) {
+        console.error("Error in admin check:", error);
         toast({
-          title: "Access Denied",
-          description: "You don't have permission to access this page",
+          title: "Error",
+          description: "An unexpected error occurred",
           variant: "destructive",
         });
-      } else {
-        setIsAdmin(true);
+        navigate("/");
+      } finally {
+        setIsLoading(false);
       }
     };
 
     checkAdminStatus();
   }, [navigate, toast]);
 
-  // Fetch videos
   const { data: videos, isLoading: videosLoading } = useQuery({
     queryKey: ["admin-videos"],
     queryFn: async () => {
@@ -143,6 +166,14 @@ const Admin = () => {
       });
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-lg">Loading...</div>
+      </div>
+    );
+  }
 
   if (!isAdmin) return null;
 
