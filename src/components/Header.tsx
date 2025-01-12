@@ -39,46 +39,52 @@ export const Header = () => {
   };
 
   return (
-    <header className="border-b">
-      <div className="container mx-auto p-4 flex justify-between items-center">
-        <NavigationMenu>
-          <NavigationMenuList>
-            <NavigationMenuItem>
-              <Link to="/">
-                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                  Homepage
-                </NavigationMenuLink>
-              </Link>
-            </NavigationMenuItem>
-            <NavigationMenuItem>
-              <Link to="/top-videos">
-                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                  Top Videos
-                </NavigationMenuLink>
-              </Link>
-            </NavigationMenuItem>
-            <NavigationMenuItem>
-              <Link to="/add-video">
-                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                  Add Video
-                </NavigationMenuLink>
-              </Link>
-            </NavigationMenuItem>
-            {isAdmin && (
+    <header className="bg-white border-b shadow-sm">
+      <div className="container mx-auto px-4 py-3">
+        <div className="flex justify-between items-center">
+          <NavigationMenu>
+            <NavigationMenuList className="space-x-2">
               <NavigationMenuItem>
-                <Link to="/admin">
+                <Link to="/">
                   <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                    Admin
+                    Homepage
                   </NavigationMenuLink>
                 </Link>
               </NavigationMenuItem>
-            )}
-          </NavigationMenuList>
-        </NavigationMenu>
-        <Button variant="outline" onClick={handleLogout}>
-          <LogOut className="mr-2 h-4 w-4" />
-          Logout
-        </Button>
+              <NavigationMenuItem>
+                <Link to="/top-videos">
+                  <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                    Top Videos
+                  </NavigationMenuLink>
+                </Link>
+              </NavigationMenuItem>
+              <NavigationMenuItem>
+                <Link to="/add-video">
+                  <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                    Add Video
+                  </NavigationMenuLink>
+                </Link>
+              </NavigationMenuItem>
+              {isAdmin && (
+                <NavigationMenuItem>
+                  <Link to="/admin">
+                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                      Admin
+                    </NavigationMenuLink>
+                  </Link>
+                </NavigationMenuItem>
+              )}
+            </NavigationMenuList>
+          </NavigationMenu>
+          <Button 
+            variant="outline"
+            onClick={handleLogout}
+            className="flex items-center gap-2 hover:bg-gray-100"
+          >
+            <LogOut className="h-4 w-4" />
+            Logout
+          </Button>
+        </div>
       </div>
     </header>
   );

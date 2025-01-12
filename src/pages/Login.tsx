@@ -4,7 +4,7 @@ import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { AuthError } from "@supabase/supabase-js";
 
 const Login = () => {
@@ -72,12 +72,14 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-white">
+      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
         <div className="text-center">
-          <h2 className="mt-6 text-3xl font-bold text-gray-900">Sign in to your account</h2>
+          <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600">
+            Welcome Back
+          </h2>
           <p className="mt-2 text-sm text-gray-600">
-            Or create a new account if you don't have one
+            Sign in to your account or create a new one
           </p>
         </div>
         {errorMessage && (
@@ -87,7 +89,19 @@ const Login = () => {
         )}
         <Auth
           supabaseClient={supabase}
-          appearance={{ theme: ThemeSupa }}
+          appearance={{ 
+            theme: ThemeSupa,
+            style: {
+              button: {
+                background: 'linear-gradient(to right, #9333ea, #3b82f6)',
+                color: 'white',
+                borderRadius: '0.5rem',
+              },
+              anchor: {
+                color: '#6366f1',
+              },
+            },
+          }}
           theme="light"
           providers={[]}
         />
