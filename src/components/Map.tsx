@@ -16,8 +16,8 @@ interface MapProps {
 }
 
 const defaultCenter = {
-  lat: 52.2297,  // Warsaw, Poland latitude
-  lng: 21.0122,  // Warsaw, Poland longitude
+  lat: 52.2297,
+  lng: 21.0122,
 };
 
 const mapContainerStyle = {
@@ -39,6 +39,7 @@ export const Map = ({ onLocationSelect, initialCenter = defaultCenter, zoom = 8 
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
   const [isUploadMode, setIsUploadMode] = useState(!!onLocationSelect);
   const [mapRef, setMapRef] = useState<google.maps.Map | null>(null);
+  const [center, setCenter] = useState(initialCenter);
   const searchBoxRef = useRef<google.maps.places.SearchBox | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -135,6 +136,7 @@ export const Map = ({ onLocationSelect, initialCenter = defaultCenter, zoom = 8 
             lng: place.geometry.location.lng(),
           };
           
+          setCenter(newLocation);
           mapRef.panTo(newLocation);
           mapRef.setZoom(15);
           
@@ -195,7 +197,7 @@ export const Map = ({ onLocationSelect, initialCenter = defaultCenter, zoom = 8 
         <GoogleMap
           mapContainerStyle={mapContainerStyle}
           zoom={zoom}
-          center={initialCenter}
+          center={center}
           onClick={handleMapClick}
           onLoad={onMapLoad}
         >
@@ -270,4 +272,3 @@ export const Map = ({ onLocationSelect, initialCenter = defaultCenter, zoom = 8 
     </div>
   );
 };
-
