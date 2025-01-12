@@ -43,7 +43,7 @@ const VideoPage = () => {
         .from('comments')
         .select(`
           *,
-          profiles:user_id (
+          profiles!comments_user_id_fkey (
             id
           )
         `)
