@@ -10,6 +10,7 @@ import TopVideos from "./pages/TopVideos";
 import AddVideo from "./pages/AddVideo";
 import Login from "./pages/Login";
 import Admin from "./pages/Admin";
+import VideoPage from "./pages/VideoPage";
 
 const queryClient = new QueryClient();
 
@@ -76,6 +77,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <Admin />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/video/:id"
+            element={
+              <ProtectedRoute>
+                <VideoPage />
               </ProtectedRoute>
             }
           />
