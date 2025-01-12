@@ -44,8 +44,27 @@ export const VideoUploadForm = ({ latitude, longitude }: VideoUploadFormProps) =
 
     setUploading(true);
     try {
+      // Get the current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !user) {
+        throw new Error('User must be logged in to submit videos');
+      }
+
       const videoUrl = `https://www.youtube.com/embed/${videoId}`;
       const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+
+      console.log('Attempting to insert video with data:', {
+        title,
+        description,
+        video_url: videoUrl,
+        thumbnail_url: thumbnailUrl,
+        latitude,
+        longitude,
+        status: 'pending',
+        source: 'youtube',
+        user_id: user.id,
+      });
 
       const { error: insertError } = await supabase
         .from('videos')
@@ -58,10 +77,13 @@ export const VideoUploadForm = ({ latitude, longitude }: VideoUploadFormProps) =
           longitude,
           status: 'pending',
           source: 'youtube',
-          user_id: (await supabase.auth.getUser()).data.user?.id,
+          user_id: user.id,
         } as VideoInsert);
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        console.error('Insert error details:', insertError);
+        throw insertError;
+      }
 
       toast({
         title: "Success",
@@ -77,7 +99,7 @@ export const VideoUploadForm = ({ latitude, longitude }: VideoUploadFormProps) =
       console.error('Submission error:', error);
       toast({
         title: "Error",
-        description: "Failed to submit video. Please try again.",
+        description: "Failed to submit video. Please ensure you are logged in and try again.",
         variant: "destructive",
       });
     } finally {
