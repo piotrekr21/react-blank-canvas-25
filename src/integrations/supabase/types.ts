@@ -9,6 +9,24 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      profiles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["user_role"] | null
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          role?: Database["public"]["Enums"]["user_role"] | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"] | null
+        }
+        Relationships: []
+      }
       videos: {
         Row: {
           created_at: string | null
@@ -94,6 +112,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      user_role: "admin" | "user"
       video_status: "pending" | "approved" | "rejected"
     }
     CompositeTypes: {
