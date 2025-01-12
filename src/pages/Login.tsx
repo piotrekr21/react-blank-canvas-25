@@ -52,6 +52,8 @@ const Login = () => {
         navigate("/");
       } else if (event === "SIGNED_OUT") {
         navigate("/login");
+      } else if (event === "USER_UPDATED" && !session) {
+        setErrorMessage("Invalid login credentials. Please check your email and password.");
       }
     });
 
@@ -88,10 +90,6 @@ const Login = () => {
           appearance={{ theme: ThemeSupa }}
           theme="light"
           providers={[]}
-          onError={(error) => {
-            setErrorMessage(getErrorMessage(error));
-            console.error("Auth error:", error);
-          }}
         />
       </div>
     </div>
