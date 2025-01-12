@@ -8,6 +8,11 @@ const AddVideo = () => {
     lat: number;
     lng: number;
   } | null>(null);
+  const [videoDetails, setVideoDetails] = useState<{
+    title: string;
+    description: string;
+    youtubeUrl: string;
+  } | null>(null);
 
   return (
     <>
@@ -18,27 +23,30 @@ const AddVideo = () => {
           <div className="space-y-4">
             <div className="bg-card rounded-lg p-4 border">
               <h2 className="text-xl font-semibold mb-4">Upload Video</h2>
-              {selectedLocation ? (
+              {!selectedLocation ? (
                 <VideoUploadForm
-                  latitude={selectedLocation.lat}
-                  longitude={selectedLocation.lng}
+                  onVideoDetailsSubmit={(details) => setVideoDetails(details)}
+                  showLocationPicker={!videoDetails}
                 />
               ) : (
-                <p className="text-muted-foreground">
-                  Please select a location on the map
-                </p>
+                <div className="space-y-4">
+                  <h3 className="font-medium">Video Details:</h3>
+                  <p><span className="font-semibold">Title:</span> {videoDetails?.title}</p>
+                  <p><span className="font-semibold">Description:</span> {videoDetails?.description}</p>
+                  <p><span className="font-semibold">Location:</span> {selectedLocation.lat.toFixed(6)}, {selectedLocation.lng.toFixed(6)}</p>
+                </div>
               )}
             </div>
           </div>
-          <div className="h-[500px] rounded-lg overflow-hidden border">
-            <Map
-              onLocationSelect={(lat, lng) =>
-                setSelectedLocation({ lat, lng })
-              }
-              initialCenter={{ lat: 52.2297, lng: 21.0122 }} // Warsaw, Poland coordinates
-              zoom={6}
-            />
-          </div>
+          {videoDetails && (
+            <div className="h-[500px] rounded-lg overflow-hidden border">
+              <Map
+                onLocationSelect={(lat, lng) => setSelectedLocation({ lat, lng })}
+                initialCenter={{ lat: 52.2297, lng: 21.0122 }}
+                zoom={6}
+              />
+            </div>
+          )}
         </div>
       </div>
     </>

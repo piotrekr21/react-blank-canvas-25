@@ -8,13 +8,20 @@ import type { Database } from "@/integrations/supabase/types";
 import { useQueryClient } from "@tanstack/react-query";
 
 interface VideoUploadFormProps {
-  latitude: number;
-  longitude: number;
+  latitude?: number;
+  longitude?: number;
+  onVideoDetailsSubmit?: (details: { title: string; description: string; youtubeUrl: string }) => void;
+  showLocationPicker?: boolean;
 }
 
 type VideoInsert = Database['public']['Tables']['videos']['Insert'];
 
-export const VideoUploadForm = ({ latitude, longitude }: VideoUploadFormProps) => {
+export const VideoUploadForm = ({ 
+  latitude, 
+  longitude, 
+  onVideoDetailsSubmit,
+  showLocationPicker = true
+}: VideoUploadFormProps) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [youtubeUrl, setYoutubeUrl] = useState("");
@@ -42,9 +49,17 @@ export const VideoUploadForm = ({ latitude, longitude }: VideoUploadFormProps) =
       return;
     }
 
+    if (showLocationPicker && onVideoDetailsSubmit) {
+      onVideoDetailsSubmit({
+        title,
+        description,
+        youtubeUrl
+      });
+      return;
+    }
+
     setUploading(true);
     try {
-      // Get the current user
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       
       if (userError || !user) {
@@ -54,18 +69,6 @@ export const VideoUploadForm = ({ latitude, longitude }: VideoUploadFormProps) =
       const videoUrl = `https://www.youtube.com/embed/${videoId}`;
       const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
 
-      console.log('Attempting to insert video with data:', {
-        title,
-        description,
-        video_url: videoUrl,
-        thumbnail_url: thumbnailUrl,
-        latitude,
-        longitude,
-        status: 'pending',
-        source: 'youtube',
-        user_id: user.id,
-      });
-
       const { error: insertError } = await supabase
         .from('videos')
         .insert({
@@ -73,8 +76,8 @@ export const VideoUploadForm = ({ latitude, longitude }: VideoUploadFormProps) =
           description,
           video_url: videoUrl,
           thumbnail_url: thumbnailUrl,
-          latitude,
-          longitude,
+          latitude: latitude!,
+          longitude: longitude!,
           status: 'pending',
           source: 'youtube',
           user_id: user.id,
@@ -139,7 +142,7 @@ export const VideoUploadForm = ({ latitude, longitude }: VideoUploadFormProps) =
         </p>
       </div>
       <Button type="submit" disabled={uploading} className="w-full">
-        {uploading ? "Submitting..." : "Submit Video"}
+        {uploading ? "Submitting..." : showLocationPicker ? "Next: Pick Location" : "Submit Video"}
       </Button>
     </form>
   );
