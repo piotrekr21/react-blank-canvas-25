@@ -39,27 +39,27 @@ export const Header = () => {
   };
 
   return (
-    <header className="border-b">
-      <div className="container mx-auto p-4 flex justify-between items-center">
+    <header className="bg-[#1A1F2C] text-white border-b border-[#333]">
+      <div className="max-w-[1440px] mx-auto px-4 py-4 flex justify-between items-center">
         <NavigationMenu>
-          <NavigationMenuList>
+          <NavigationMenuList className="space-x-6">
             <NavigationMenuItem>
               <Link to="/">
-                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                <NavigationMenuLink className="text-white hover:text-[#9b87f5] transition-colors">
                   Homepage
                 </NavigationMenuLink>
               </Link>
             </NavigationMenuItem>
             <NavigationMenuItem>
               <Link to="/top-videos">
-                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                <NavigationMenuLink className="text-white hover:text-[#9b87f5] transition-colors">
                   Top Videos
                 </NavigationMenuLink>
               </Link>
             </NavigationMenuItem>
             <NavigationMenuItem>
               <Link to="/add-video">
-                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                <NavigationMenuLink className="text-white hover:text-[#9b87f5] transition-colors">
                   Add Video
                 </NavigationMenuLink>
               </Link>
@@ -67,7 +67,7 @@ export const Header = () => {
             {isAdmin && (
               <NavigationMenuItem>
                 <Link to="/admin">
-                  <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                  <NavigationMenuLink className="text-white hover:text-[#9b87f5] transition-colors">
                     Admin
                   </NavigationMenuLink>
                 </Link>
@@ -75,7 +75,11 @@ export const Header = () => {
             )}
           </NavigationMenuList>
         </NavigationMenu>
-        <Button variant="outline" onClick={handleLogout}>
+        <Button 
+          variant="ghost" 
+          onClick={handleLogout}
+          className="text-white hover:text-[#9b87f5] hover:bg-[#2A2F3C]"
+        >
           <LogOut className="mr-2 h-4 w-4" />
           Logout
         </Button>

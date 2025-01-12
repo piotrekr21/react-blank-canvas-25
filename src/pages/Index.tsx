@@ -28,22 +28,30 @@ const Index = () => {
   });
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-[#F6F6F7]">
       <Header />
       <main className="flex-1">
-        <div className="container mx-auto p-4">
-          <h1 className="text-3xl font-bold mb-6">Dashcam Videos Map</h1>
-          <Map />
+        <div className="max-w-[1440px] mx-auto px-4 py-8">
+          <h1 className="text-4xl font-bold mb-8 text-[#1A1F2C]">Dashcam Videos Map</h1>
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <Map />
+          </div>
           
-          <div className="mt-8">
-            <h2 className="text-2xl font-semibold mb-4">Latest Videos</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="mt-12">
+            <h2 className="text-2xl font-semibold mb-6 text-[#1A1F2C]">Latest Videos</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {latestVideos?.map((video) => (
-                <Link key={video.id} to={`/video/${video.id}`} className="block hover:opacity-90 transition-opacity">
-                  <Card>
+                <Link 
+                  key={video.id} 
+                  to={`/video/${video.id}`} 
+                  className="block transition-transform hover:scale-105"
+                >
+                  <Card className="h-full bg-white shadow-lg hover:shadow-xl transition-shadow">
                     <CardHeader>
-                      <CardTitle>{video.title}</CardTitle>
-                      <CardDescription>{new Date(video.created_at).toLocaleDateString()}</CardDescription>
+                      <CardTitle className="text-[#1A1F2C]">{video.title}</CardTitle>
+                      <CardDescription className="text-[#8E9196]">
+                        {new Date(video.created_at).toLocaleDateString()}
+                      </CardDescription>
                     </CardHeader>
                     <CardContent>
                       {video.thumbnail_url && (
@@ -53,7 +61,9 @@ const Index = () => {
                           className="w-full h-48 object-cover rounded-md"
                         />
                       )}
-                      <p className="mt-2 text-sm text-gray-600 line-clamp-2">{video.description}</p>
+                      <p className="mt-4 text-sm text-[#8E9196] line-clamp-2">
+                        {video.description}
+                      </p>
                     </CardContent>
                   </Card>
                 </Link>

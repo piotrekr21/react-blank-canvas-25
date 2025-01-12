@@ -22,7 +22,7 @@ const defaultCenter = {
 
 const mapContainerStyle = {
   width: "100%",
-  height: "70vh",
+  height: "600px",
 };
 
 const libraries: ["places"] = ["places"];
@@ -78,7 +78,7 @@ export const Map = ({ onLocationSelect, initialCenter = defaultCenter, zoom = 8 
         .select('*')
         .eq('video_id', videoId)
         .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
-        .maybeSingle(); // Changed from .single() to .maybeSingle()
+        .maybeSingle();
 
       if (fetchError && fetchError.code !== 'PGRST116') throw fetchError;
 
@@ -170,10 +170,11 @@ export const Map = ({ onLocationSelect, initialCenter = defaultCenter, zoom = 8 
   return (
     <div className="space-y-4">
       {!onLocationSelect && (
-        <div className="flex justify-end">
+        <div className="flex justify-end mb-6">
           <Button
             onClick={() => setIsUploadMode(!isUploadMode)}
             variant={isUploadMode ? "destructive" : "default"}
+            className="bg-[#9b87f5] hover:bg-[#7E69AB] text-white"
           >
             {isUploadMode ? "Cancel Upload" : "Upload New Video"}
           </Button>
@@ -187,17 +188,29 @@ export const Map = ({ onLocationSelect, initialCenter = defaultCenter, zoom = 8 
         <Input
           type="text"
           placeholder="Search for a location..."
-          className="w-full bg-white shadow-lg mb-4"
+          className="w-full bg-white shadow-lg mb-6 border-[#E5DEFF] focus:border-[#9b87f5] focus:ring-[#9b87f5]"
         />
       </StandaloneSearchBox>
 
-      <div className="relative">
+      <div className="relative rounded-lg overflow-hidden shadow-lg">
         <GoogleMap
           mapContainerStyle={mapContainerStyle}
           zoom={zoom}
           center={center}
           onClick={handleMapClick}
           onLoad={onMapLoad}
+          options={{
+            styles: [
+              {
+                featureType: "all",
+                elementType: "all",
+                stylers: [
+                  { saturation: -100 },
+                  { lightness: 0 }
+                ]
+              }
+            ]
+          }}
         >
           {videos?.map((video) => (
             <Marker
@@ -259,8 +272,8 @@ export const Map = ({ onLocationSelect, initialCenter = defaultCenter, zoom = 8 
       </div>
 
       {selectedLocation && isUploadMode && !onLocationSelect && (
-        <div className="mt-4 max-w-md mx-auto">
-          <h2 className="text-xl font-bold mb-4">Upload Video</h2>
+        <div className="mt-8 max-w-md mx-auto bg-white p-6 rounded-lg shadow-lg">
+          <h2 className="text-xl font-bold mb-4 text-[#1A1F2C]">Upload Video</h2>
           <VideoUploadForm
             latitude={selectedLocation.lat()}
             longitude={selectedLocation.lng()}
