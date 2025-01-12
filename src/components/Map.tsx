@@ -1,5 +1,5 @@
-import { useState, useCallback } from "react";
-import { GoogleMap, useLoadScript, Marker, InfoWindow } from "@react-google-maps/api";
+import { useState, useCallback, useRef } from "react";
+import { GoogleMap, useLoadScript, Marker, InfoWindow, StandaloneSearchBox } from "@react-google-maps/api";
 import { VideoUploadForm } from "./VideoUploadForm";
 import { Button } from "./ui/button";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { useToast } from "./ui/use-toast";
 import { ThumbsUp, ThumbsDown } from "lucide-react";
+import { Input } from "./ui/input";
 
 interface MapProps {
   onLocationSelect?: (lat: number, lng: number) => void;
@@ -24,16 +25,21 @@ const mapContainerStyle = {
   height: "70vh",
 };
 
+const libraries: ("places" | "drawing" | "geometry" | "localContext" | "visualization")[] = ["places"];
+
 type Video = Database['public']['Tables']['videos']['Row'];
 
 export const Map = ({ onLocationSelect, initialCenter = defaultCenter, zoom = 8 }: MapProps) => {
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: "AIzaSyDWE6xVw-cDOC7Ee0SLFXG-5DueJshQlAA",
+    libraries,
   });
 
   const [selectedLocation, setSelectedLocation] = useState<google.maps.LatLng | null>(null);
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
   const [isUploadMode, setIsUploadMode] = useState(!!onLocationSelect);
+  const [mapRef, setMapRef] = useState<google.maps.Map | null>(null);
+  const searchBoxRef = useRef<google.maps.places.SearchBox | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -118,6 +124,37 @@ export const Map = ({ onLocationSelect, initialCenter = defaultCenter, zoom = 8 
     }
   }, [onLocationSelect]);
 
+  const handlePlacesChanged = () => {
+    if (searchBoxRef.current && mapRef) {
+      const places = searchBoxRef.current.getPlaces();
+      if (places && places.length > 0) {
+        const place = places[0];
+        if (place.geometry?.location) {
+          const newLocation = {
+            lat: place.geometry.location.lat(),
+            lng: place.geometry.location.lng(),
+          };
+          
+          mapRef.panTo(newLocation);
+          mapRef.setZoom(15);
+          
+          setSelectedLocation(place.geometry.location);
+          if (onLocationSelect) {
+            onLocationSelect(newLocation.lat, newLocation.lng);
+          }
+        }
+      }
+    }
+  };
+
+  const onMapLoad = (map: google.maps.Map) => {
+    setMapRef(map);
+  };
+
+  const onSearchBoxLoad = (ref: google.maps.places.SearchBox) => {
+    searchBoxRef.current = ref;
+  };
+
   const getVoteCounts = (videoId: string) => {
     const videoVotes = votes?.filter(v => v.video_id === videoId) || [];
     const upvotes = videoVotes.filter(v => v.vote_type).length;
@@ -141,69 +178,85 @@ export const Map = ({ onLocationSelect, initialCenter = defaultCenter, zoom = 8 
         </div>
       )}
 
-      <GoogleMap
-        mapContainerStyle={mapContainerStyle}
-        zoom={zoom}
-        center={initialCenter}
-        onClick={handleMapClick}
-      >
-        {videos?.map((video) => (
-          <Marker
-            key={video.id}
-            position={{ lat: Number(video.latitude), lng: Number(video.longitude) }}
-            onClick={() => setSelectedVideo(video)}
-          />
-        ))}
-
-        {selectedLocation && onLocationSelect && (
-          <Marker
-            position={selectedLocation}
-          />
-        )}
-
-        {selectedVideo && (
-          <InfoWindow
-            position={{ lat: Number(selectedVideo.latitude), lng: Number(selectedVideo.longitude) }}
-            onCloseClick={() => setSelectedVideo(null)}
+      <div className="relative">
+        <div className="absolute top-4 left-4 right-4 z-10">
+          <StandaloneSearchBox
+            onLoad={onSearchBoxLoad}
+            onPlacesChanged={handlePlacesChanged}
           >
-            <div className="p-2 max-w-sm">
-              <h3 className="font-bold">{selectedVideo.title}</h3>
-              <p className="text-sm mb-2">{selectedVideo.description}</p>
-              <iframe
-                src={selectedVideo.video_url}
-                className="w-full aspect-video rounded-lg"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
-              <div className="flex justify-between items-center mt-4">
-                <div className="flex gap-4">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="flex items-center gap-2"
-                    onClick={() => voteMutation.mutate({ videoId: selectedVideo.id, voteType: true })}
-                  >
-                    <ThumbsUp className="w-4 h-4" />
-                    <span>{getVoteCounts(selectedVideo.id).upvotes}</span>
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="flex items-center gap-2"
-                    onClick={() => voteMutation.mutate({ videoId: selectedVideo.id, voteType: false })}
-                  >
-                    <ThumbsDown className="w-4 h-4" />
-                    <span>{getVoteCounts(selectedVideo.id).downvotes}</span>
-                  </Button>
+            <Input
+              type="text"
+              placeholder="Search for a location..."
+              className="w-full bg-white shadow-lg"
+            />
+          </StandaloneSearchBox>
+        </div>
+
+        <GoogleMap
+          mapContainerStyle={mapContainerStyle}
+          zoom={zoom}
+          center={initialCenter}
+          onClick={handleMapClick}
+          onLoad={onMapLoad}
+        >
+          {videos?.map((video) => (
+            <Marker
+              key={video.id}
+              position={{ lat: Number(video.latitude), lng: Number(video.longitude) }}
+              onClick={() => setSelectedVideo(video)}
+            />
+          ))}
+
+          {selectedLocation && onLocationSelect && (
+            <Marker
+              position={selectedLocation}
+            />
+          )}
+
+          {selectedVideo && (
+            <InfoWindow
+              position={{ lat: Number(selectedVideo.latitude), lng: Number(selectedVideo.longitude) }}
+              onCloseClick={() => setSelectedVideo(null)}
+            >
+              <div className="p-2 max-w-sm">
+                <h3 className="font-bold">{selectedVideo.title}</h3>
+                <p className="text-sm mb-2">{selectedVideo.description}</p>
+                <iframe
+                  src={selectedVideo.video_url}
+                  className="w-full aspect-video rounded-lg"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+                <div className="flex justify-between items-center mt-4">
+                  <div className="flex gap-4">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex items-center gap-2"
+                      onClick={() => voteMutation.mutate({ videoId: selectedVideo.id, voteType: true })}
+                    >
+                      <ThumbsUp className="w-4 h-4" />
+                      <span>{getVoteCounts(selectedVideo.id).upvotes}</span>
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex items-center gap-2"
+                      onClick={() => voteMutation.mutate({ videoId: selectedVideo.id, voteType: false })}
+                    >
+                      <ThumbsDown className="w-4 h-4" />
+                      <span>{getVoteCounts(selectedVideo.id).downvotes}</span>
+                    </Button>
+                  </div>
+                  <span className="text-sm text-gray-500">
+                    {new Date(selectedVideo.created_at || '').toLocaleDateString()}
+                  </span>
                 </div>
-                <span className="text-sm text-gray-500">
-                  {new Date(selectedVideo.created_at || '').toLocaleDateString()}
-                </span>
               </div>
-            </div>
-          </InfoWindow>
-        )}
-      </GoogleMap>
+            </InfoWindow>
+          )}
+        </GoogleMap>
+      </div>
 
       {selectedLocation && isUploadMode && !onLocationSelect && (
         <div className="mt-4 max-w-md mx-auto">
