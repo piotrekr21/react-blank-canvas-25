@@ -8,26 +8,32 @@ import type { Database } from "@/integrations/supabase/types";
 import { useToast } from "./ui/use-toast";
 import { ThumbsUp, ThumbsDown } from "lucide-react";
 
+interface MapProps {
+  onLocationSelect?: (lat: number, lng: number) => void;
+  initialCenter?: { lat: number; lng: number };
+  zoom?: number;
+}
+
+const defaultCenter = {
+  lat: 40.7128,
+  lng: -74.0060,
+};
+
 const mapContainerStyle = {
   width: "100%",
   height: "70vh",
 };
 
-const center = {
-  lat: 40.7128,
-  lng: -74.0060,
-};
-
 type Video = Database['public']['Tables']['videos']['Row'];
 
-export const Map = () => {
+export const Map = ({ onLocationSelect, initialCenter = defaultCenter, zoom = 8 }: MapProps) => {
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: "AIzaSyDWE6xVw-cDOC7Ee0SLFXG-5DueJshQlAA",
   });
 
   const [selectedLocation, setSelectedLocation] = useState<google.maps.LatLng | null>(null);
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
-  const [isUploadMode, setIsUploadMode] = useState(false);
+  const [isUploadMode, setIsUploadMode] = useState(!!onLocationSelect);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -104,10 +110,13 @@ export const Map = () => {
   });
 
   const handleMapClick = useCallback((e: google.maps.MapMouseEvent) => {
-    if (isUploadMode && e.latLng) {
+    if (e.latLng) {
       setSelectedLocation(e.latLng);
+      if (onLocationSelect) {
+        onLocationSelect(e.latLng.lat(), e.latLng.lng());
+      }
     }
-  }, [isUploadMode]);
+  }, [onLocationSelect]);
 
   const getVoteCounts = (videoId: string) => {
     const videoVotes = votes?.filter(v => v.video_id === videoId) || [];
@@ -121,19 +130,21 @@ export const Map = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
-        <Button
-          onClick={() => setIsUploadMode(!isUploadMode)}
-          variant={isUploadMode ? "destructive" : "default"}
-        >
-          {isUploadMode ? "Cancel Upload" : "Upload New Video"}
-        </Button>
-      </div>
+      {!onLocationSelect && (
+        <div className="flex justify-end">
+          <Button
+            onClick={() => setIsUploadMode(!isUploadMode)}
+            variant={isUploadMode ? "destructive" : "default"}
+          >
+            {isUploadMode ? "Cancel Upload" : "Upload New Video"}
+          </Button>
+        </div>
+      )}
 
       <GoogleMap
         mapContainerStyle={mapContainerStyle}
-        zoom={8}
-        center={center}
+        zoom={zoom}
+        center={initialCenter}
         onClick={handleMapClick}
       >
         {videos?.map((video) => (
@@ -143,6 +154,12 @@ export const Map = () => {
             onClick={() => setSelectedVideo(video)}
           />
         ))}
+
+        {selectedLocation && onLocationSelect && (
+          <Marker
+            position={selectedLocation}
+          />
+        )}
 
         {selectedVideo && (
           <InfoWindow
@@ -187,7 +204,7 @@ export const Map = () => {
         )}
       </GoogleMap>
 
-      {selectedLocation && isUploadMode && (
+      {selectedLocation && isUploadMode && !onLocationSelect && (
         <div className="mt-4 max-w-md mx-auto">
           <h2 className="text-xl font-bold mb-4">Upload Video</h2>
           <VideoUploadForm
