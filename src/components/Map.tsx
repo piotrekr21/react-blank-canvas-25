@@ -15,8 +15,8 @@ interface MapProps {
 }
 
 const defaultCenter = {
-  lat: 40.7128,
-  lng: -74.0060,
+  lat: 52.2297,  // Warsaw, Poland latitude
+  lng: 21.0122,  // Warsaw, Poland longitude
 };
 
 const mapContainerStyle = {
