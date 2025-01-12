@@ -10,20 +10,13 @@ import { useQueryClient } from "@tanstack/react-query";
 interface VideoUploadFormProps {
   latitude: number;
   longitude: number;
-  initialTitle?: string;
-  initialDescription?: string;
 }
 
 type VideoInsert = Database['public']['Tables']['videos']['Insert'];
 
-export const VideoUploadForm = ({ 
-  latitude, 
-  longitude, 
-  initialTitle = "", 
-  initialDescription = "" 
-}: VideoUploadFormProps) => {
-  const [title, setTitle] = useState(initialTitle);
-  const [description, setDescription] = useState(initialDescription);
+export const VideoUploadForm = ({ latitude, longitude }: VideoUploadFormProps) => {
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [youtubeUrl, setYoutubeUrl] = useState("");
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
@@ -60,6 +53,18 @@ export const VideoUploadForm = ({
 
       const videoUrl = `https://www.youtube.com/embed/${videoId}`;
       const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+
+      console.log('Attempting to insert video with data:', {
+        title,
+        description,
+        video_url: videoUrl,
+        thumbnail_url: thumbnailUrl,
+        latitude,
+        longitude,
+        status: 'pending',
+        source: 'youtube',
+        user_id: user.id,
+      });
 
       const { error: insertError } = await supabase
         .from('videos')
