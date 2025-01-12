@@ -11,6 +11,13 @@ import {
 } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 
+const createSlug = (text: string) => {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+};
+
 const Index = () => {
   const { data: latestVideos } = useQuery({
     queryKey: ['latest-videos'],
@@ -39,7 +46,11 @@ const Index = () => {
             <h2 className="text-2xl font-semibold mb-4">Latest Videos</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {latestVideos?.map((video) => (
-                <Link key={video.id} to={`/video/${video.id}`} className="block hover:opacity-90 transition-opacity">
+                <Link 
+                  key={video.id} 
+                  to={`/video/${video.id}/${createSlug(video.title)}`} 
+                  className="block hover:opacity-90 transition-opacity"
+                >
                   <Card>
                     <CardHeader>
                       <CardTitle>{video.title}</CardTitle>

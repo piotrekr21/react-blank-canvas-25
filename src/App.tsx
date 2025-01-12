@@ -81,7 +81,7 @@ const App = () => (
             }
           />
           <Route
-            path="/video/:id"
+            path="/video/:id/:slug"
             element={
               <ProtectedRoute>
                 <VideoPage />

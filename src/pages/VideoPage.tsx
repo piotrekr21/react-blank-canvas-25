@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
@@ -7,11 +7,19 @@ import { ThumbsUp, ThumbsDown, MessageCircle } from "lucide-react";
 import { Helmet } from "react-helmet";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 
+const createSlug = (text: string) => {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+};
+
 const VideoPage = () => {
-  const { id } = useParams();
+  const { id, slug } = useParams();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [newComment, setNewComment] = useState("");
@@ -38,6 +46,13 @@ const VideoPage = () => {
     },
     enabled: !!id,
   });
+
+  // Redirect if slug doesn't match
+  useEffect(() => {
+    if (video && slug !== createSlug(video.title)) {
+      navigate(`/video/${id}/${createSlug(video.title)}`, { replace: true });
+    }
+  }, [video, slug, id, navigate]);
 
   const { data: comments, isLoading: areCommentsLoading } = useQuery({
     queryKey: ['comments', id],
