@@ -41,12 +41,7 @@ const VideoPage = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('comments')
-        .select(`
-          *,
-          profiles!comments_user_id_fkey (
-            id
-          )
-        `)
+        .select('*')
         .eq('video_id', id)
         .order('created_at', { ascending: false });
 
