@@ -23,22 +23,26 @@ const AddVideo = () => {
           <div className="space-y-4">
             <div className="bg-card rounded-lg p-4 border">
               <h2 className="text-xl font-semibold mb-4">Upload Video</h2>
-              {!selectedLocation ? (
-                <VideoUploadForm
-                  onVideoDetailsSubmit={(details) => setVideoDetails(details)}
-                  showLocationPicker={!videoDetails}
-                />
-              ) : (
-                <div className="space-y-4">
-                  <h3 className="font-medium">Video Details:</h3>
-                  <p><span className="font-semibold">Title:</span> {videoDetails?.title}</p>
-                  <p><span className="font-semibold">Description:</span> {videoDetails?.description}</p>
-                  <p><span className="font-semibold">Location:</span> {selectedLocation.lat.toFixed(6)}, {selectedLocation.lng.toFixed(6)}</p>
-                </div>
-              )}
+              <VideoUploadForm
+                latitude={selectedLocation?.lat}
+                longitude={selectedLocation?.lng}
+                showLocationPicker={false}
+              />
             </div>
           </div>
-          {videoDetails && (
+          <div>
+            <div className="bg-card rounded-lg p-4 border mb-4">
+              <h2 className="text-xl font-semibold mb-4">Select Location</h2>
+              {selectedLocation ? (
+                <p className="text-sm text-muted-foreground mb-4">
+                  Selected location: {selectedLocation.lat.toFixed(6)}, {selectedLocation.lng.toFixed(6)}
+                </p>
+              ) : (
+                <p className="text-sm text-muted-foreground mb-4">
+                  Click on the map to select a location for your video
+                </p>
+              )}
+            </div>
             <div className="h-[500px] rounded-lg overflow-hidden border">
               <Map
                 onLocationSelect={(lat, lng) => setSelectedLocation({ lat, lng })}
@@ -46,7 +50,7 @@ const AddVideo = () => {
                 zoom={6}
               />
             </div>
-          )}
+          </div>
         </div>
       </div>
     </>

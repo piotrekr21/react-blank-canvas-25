@@ -49,11 +49,11 @@ export const VideoUploadForm = ({
       return;
     }
 
-    if (showLocationPicker && onVideoDetailsSubmit) {
-      onVideoDetailsSubmit({
-        title,
-        description,
-        youtubeUrl
+    if (!latitude || !longitude) {
+      toast({
+        title: "Error",
+        description: "Please select a location on the map",
+        variant: "destructive",
       });
       return;
     }
@@ -76,8 +76,8 @@ export const VideoUploadForm = ({
           description,
           video_url: videoUrl,
           thumbnail_url: thumbnailUrl,
-          latitude: latitude!,
-          longitude: longitude!,
+          latitude,
+          longitude,
           status: 'pending',
           source: 'youtube',
           user_id: user.id,
@@ -142,7 +142,7 @@ export const VideoUploadForm = ({
         </p>
       </div>
       <Button type="submit" disabled={uploading} className="w-full">
-        {uploading ? "Submitting..." : showLocationPicker ? "Next: Pick Location" : "Submit Video"}
+        {uploading ? "Submitting..." : "Submit Video"}
       </Button>
     </form>
   );
