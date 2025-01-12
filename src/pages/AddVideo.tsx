@@ -25,7 +25,7 @@ const AddVideo = () => {
                 />
               ) : (
                 <p className="text-muted-foreground">
-                  Please select a location on the map first
+                  Please select a location on the map
                 </p>
               )}
             </div>
