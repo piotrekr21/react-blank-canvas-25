@@ -169,10 +169,11 @@ export const Map = ({ onLocationSelect, initialCenter = defaultCenter, zoom = 8 
             <div className="p-2 max-w-sm">
               <h3 className="font-bold">{selectedVideo.title}</h3>
               <p className="text-sm mb-2">{selectedVideo.description}</p>
-              <video
-                controls
-                className="mt-2 w-full rounded-lg"
+              <iframe
                 src={selectedVideo.video_url}
+                className="w-full aspect-video rounded-lg"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
               />
               <div className="flex justify-between items-center mt-4">
                 <div className="flex gap-4">

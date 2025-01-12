@@ -17,39 +17,26 @@ type VideoInsert = Database['public']['Tables']['videos']['Insert'];
 export const VideoUploadForm = ({ latitude, longitude }: VideoUploadFormProps) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [youtubeUrl, setYoutubeUrl] = useState("");
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  const getYoutubeVideoId = (url: string) => {
+    const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[7].length === 11) ? match[7] : null;
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const videoInput = e.currentTarget.querySelector('input[type="file"]') as HTMLInputElement;
-    const file = videoInput.files?.[0];
-
-    if (!file) {
+    
+    const videoId = getYoutubeVideoId(youtubeUrl);
+    
+    if (!videoId) {
       toast({
         title: "Error",
-        description: "Please select a video file",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Validate file type
-    if (!file.type.startsWith('video/')) {
-      toast({
-        title: "Error",
-        description: "Please upload a valid video file",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Validate file size (100MB limit)
-    if (file.size > 100 * 1024 * 1024) {
-      toast({
-        title: "Error",
-        description: "Video file size must be less than 100MB",
+        description: "Please enter a valid YouTube URL",
         variant: "destructive",
       });
       return;
@@ -57,28 +44,20 @@ export const VideoUploadForm = ({ latitude, longitude }: VideoUploadFormProps) =
 
     setUploading(true);
     try {
-      const fileExt = file.name.split('.').pop();
-      const filePath = `${Math.random()}.${fileExt}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('dashcam_videos')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: urlData } = supabase.storage
-        .from('dashcam_videos')
-        .getPublicUrl(filePath);
+      const videoUrl = `https://www.youtube.com/embed/${videoId}`;
+      const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
 
       const { error: insertError } = await supabase
         .from('videos')
         .insert({
           title,
           description,
-          video_url: urlData.publicUrl,
+          video_url: videoUrl,
+          thumbnail_url: thumbnailUrl,
           latitude,
           longitude,
           status: 'pending',
+          source: 'youtube',
           user_id: (await supabase.auth.getUser()).data.user?.id,
         } as VideoInsert);
 
@@ -86,19 +65,19 @@ export const VideoUploadForm = ({ latitude, longitude }: VideoUploadFormProps) =
 
       toast({
         title: "Success",
-        description: "Video uploaded successfully and pending review",
+        description: "Video submitted successfully and pending review",
       });
 
       queryClient.invalidateQueries({ queryKey: ['videos'] });
 
       setTitle("");
       setDescription("");
-      videoInput.value = "";
+      setYoutubeUrl("");
     } catch (error) {
-      console.error('Upload error:', error);
+      console.error('Submission error:', error);
       toast({
         title: "Error",
-        description: "Failed to upload video. Please try again.",
+        description: "Failed to submit video. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -123,22 +102,22 @@ export const VideoUploadForm = ({ latitude, longitude }: VideoUploadFormProps) =
           placeholder="Description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          className="min-h-[100px]"
+          className="min-h-[100px] mb-2"
         />
-      </div>
-      <div className="space-y-2">
         <Input
-          type="file"
-          accept="video/*"
+          type="url"
+          placeholder="YouTube Video URL"
+          value={youtubeUrl}
+          onChange={(e) => setYoutubeUrl(e.target.value)}
           required
-          className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
+          className="mb-2"
         />
         <p className="text-sm text-gray-500">
-          Maximum file size: 100MB. Supported formats: MP4, WebM, MOV
+          Please enter a valid YouTube video URL (e.g., https://www.youtube.com/watch?v=xxxxx)
         </p>
       </div>
       <Button type="submit" disabled={uploading} className="w-full">
-        {uploading ? "Uploading..." : "Upload Video"}
+        {uploading ? "Submitting..." : "Submit Video"}
       </Button>
     </form>
   );
