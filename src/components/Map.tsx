@@ -20,7 +20,7 @@ type Video = Database['public']['Tables']['videos']['Row'];
 
 export const Map = () => {
   const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "",
+    googleMapsApiKey: "AIzaSyDHxHvxXwzGxLYYAIxFYhV8RBBRZc-9Rnk",
   });
 
   const [selectedLocation, setSelectedLocation] = useState<google.maps.LatLng | null>(null);
