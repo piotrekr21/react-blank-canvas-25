@@ -12,9 +12,28 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { LogOut } from "lucide-react";
+import { useEffect, useState } from "react";
 
 const Index = () => {
   const navigate = useNavigate();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
+        
+        setIsAdmin(profiles?.role === 'admin');
+      }
+    };
+
+    checkAdminStatus();
+  }, []);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -48,6 +67,15 @@ const Index = () => {
                   </NavigationMenuLink>
                 </Link>
               </NavigationMenuItem>
+              {isAdmin && (
+                <NavigationMenuItem>
+                  <Link to="/admin">
+                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                      Admin
+                    </NavigationMenuLink>
+                  </Link>
+                </NavigationMenuItem>
+              )}
             </NavigationMenuList>
           </NavigationMenu>
           <Button variant="outline" onClick={handleLogout}>
