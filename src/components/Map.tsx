@@ -1,13 +1,13 @@
 import { useState, useCallback, useRef } from "react";
 import { GoogleMap, useLoadScript, Marker, InfoWindow, StandaloneSearchBox } from "@react-google-maps/api";
 import { VideoUploadForm } from "./VideoUploadForm";
-import { Button } from "./ui/button";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { useToast } from "./ui/use-toast";
 import { ThumbsUp, ThumbsDown } from "lucide-react";
 import { Input } from "./ui/input";
+import { Button } from "./ui/button";
 
 interface MapProps {
   onLocationSelect?: (lat: number, lng: number) => void;
@@ -37,7 +37,6 @@ export const Map = ({ onLocationSelect, initialCenter = defaultCenter, zoom = 8 
 
   const [selectedLocation, setSelectedLocation] = useState<google.maps.LatLng | null>(null);
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
-  const [isUploadMode, setIsUploadMode] = useState(!!onLocationSelect);
   const [mapRef, setMapRef] = useState<google.maps.Map | null>(null);
   const [center, setCenter] = useState(initialCenter);
   const searchBoxRef = useRef<google.maps.places.SearchBox | null>(null);
@@ -78,7 +77,7 @@ export const Map = ({ onLocationSelect, initialCenter = defaultCenter, zoom = 8 
         .select('*')
         .eq('video_id', videoId)
         .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
-        .maybeSingle(); // Changed from .single() to .maybeSingle()
+        .maybeSingle();
 
       if (fetchError && fetchError.code !== 'PGRST116') throw fetchError;
 
@@ -169,17 +168,6 @@ export const Map = ({ onLocationSelect, initialCenter = defaultCenter, zoom = 8 
 
   return (
     <div className="space-y-4">
-      {!onLocationSelect && (
-        <div className="flex justify-end">
-          <Button
-            onClick={() => setIsUploadMode(!isUploadMode)}
-            variant={isUploadMode ? "destructive" : "default"}
-          >
-            {isUploadMode ? "Cancel Upload" : "Upload New Video"}
-          </Button>
-        </div>
-      )}
-
       <StandaloneSearchBox
         onLoad={onSearchBoxLoad}
         onPlacesChanged={handlePlacesChanged}
@@ -258,7 +246,7 @@ export const Map = ({ onLocationSelect, initialCenter = defaultCenter, zoom = 8 
         </GoogleMap>
       </div>
 
-      {selectedLocation && isUploadMode && !onLocationSelect && (
+      {selectedLocation && onLocationSelect && (
         <div className="mt-4 max-w-md mx-auto">
           <h2 className="text-xl font-bold mb-4">Upload Video</h2>
           <VideoUploadForm
