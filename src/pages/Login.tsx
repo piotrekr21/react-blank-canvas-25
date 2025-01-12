@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/components/ui/use-toast";
+import { AuthError } from "@supabase/supabase-js";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -21,7 +22,7 @@ const Login = () => {
           .eq("id", session?.user.id)
           .maybeSingle();
 
-        if (profileError || !profile) {
+        if (profileError) {
           toast({
             title: "Error",
             description: "There was an issue with your profile. Please contact support.",
@@ -29,6 +30,23 @@ const Login = () => {
           });
           await supabase.auth.signOut();
           return;
+        }
+
+        if (!profile) {
+          // If profile doesn't exist, create it
+          const { error: insertError } = await supabase
+            .from("profiles")
+            .insert([{ id: session.user.id, role: 'user' }]);
+
+          if (insertError) {
+            toast({
+              title: "Error",
+              description: "Failed to create user profile. Please contact support.",
+              variant: "destructive",
+            });
+            await supabase.auth.signOut();
+            return;
+          }
         }
 
         navigate("/");
@@ -39,6 +57,17 @@ const Login = () => {
 
     return () => subscription.unsubscribe();
   }, [navigate, toast]);
+
+  const getErrorMessage = (error: AuthError) => {
+    switch (error.message) {
+      case "Invalid login credentials":
+        return "Invalid email or password. Please check your credentials and try again.";
+      case "Email not confirmed":
+        return "Please verify your email address before signing in.";
+      default:
+        return error.message;
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -60,7 +89,7 @@ const Login = () => {
           theme="light"
           providers={[]}
           onError={(error) => {
-            setErrorMessage(error.message);
+            setErrorMessage(getErrorMessage(error));
             console.error("Auth error:", error);
           }}
         />
