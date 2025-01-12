@@ -20,7 +20,7 @@ type Video = Database['public']['Tables']['videos']['Row'];
 
 export const Map = () => {
   const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: "AIzaSyDWE6xVw-cDOC7Ee0SLFXG-5DueJshQlAA",
+    googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY || "",
   });
 
   const [selectedLocation, setSelectedLocation] = useState<google.maps.LatLng | null>(null);
@@ -51,12 +51,6 @@ export const Map = () => {
 
   return (
     <div className="space-y-4">
-      <div className="bg-yellow-100 border-l-4 border-yellow-500 p-4 mb-4">
-        <p className="text-yellow-700">
-          ⚠️ This map is for development purposes only. The API key is restricted.
-        </p>
-      </div>
-      
       <div className="flex justify-end">
         <Button
           onClick={() => setIsUploadMode(!isUploadMode)}
