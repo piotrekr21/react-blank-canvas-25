@@ -4,11 +4,14 @@ import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
 import { useToast } from "./ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 
 interface VideoUploadFormProps {
   latitude: number;
   longitude: number;
 }
+
+type VideoInsert = Database['public']['Tables']['videos']['Insert'];
 
 export const VideoUploadForm = ({ latitude, longitude }: VideoUploadFormProps) => {
   const [title, setTitle] = useState("");
@@ -53,7 +56,9 @@ export const VideoUploadForm = ({ latitude, longitude }: VideoUploadFormProps) =
           video_url: urlData.publicUrl,
           latitude,
           longitude,
-        });
+          status: 'pending',
+          user_id: (await supabase.auth.getUser()).data.user?.id,
+        } as VideoInsert);
 
       if (insertError) throw insertError;
 

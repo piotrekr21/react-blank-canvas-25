@@ -4,6 +4,7 @@ import { VideoUploadForm } from "./VideoUploadForm";
 import { Button } from "./ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 
 const mapContainerStyle = {
   width: "100%",
@@ -15,18 +16,11 @@ const center = {
   lng: -74.0060,
 };
 
-interface Video {
-  id: string;
-  title: string;
-  description: string;
-  video_url: string;
-  latitude: number;
-  longitude: number;
-}
+type Video = Database['public']['Tables']['videos']['Row'];
 
 export const Map = () => {
   const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: "GOOGLE_MAPS_API_KEY",
+    googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY || "",
   });
 
   const [selectedLocation, setSelectedLocation] = useState<google.maps.LatLng | null>(null);
@@ -75,14 +69,14 @@ export const Map = () => {
         {videos?.map((video) => (
           <Marker
             key={video.id}
-            position={{ lat: video.latitude, lng: video.longitude }}
+            position={{ lat: Number(video.latitude), lng: Number(video.longitude) }}
             onClick={() => setSelectedVideo(video)}
           />
         ))}
 
         {selectedVideo && (
           <InfoWindow
-            position={{ lat: selectedVideo.latitude, lng: selectedVideo.longitude }}
+            position={{ lat: Number(selectedVideo.latitude), lng: Number(selectedVideo.longitude) }}
             onCloseClick={() => setSelectedVideo(null)}
           >
             <div className="p-2 max-w-sm">
