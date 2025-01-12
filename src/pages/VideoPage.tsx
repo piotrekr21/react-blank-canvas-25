@@ -67,12 +67,25 @@ const VideoPage = () => {
             <CardDescription>Posted on {new Date(video.created_at).toLocaleDateString()}</CardDescription>
           </CardHeader>
           <CardContent>
-            {video.thumbnail_url && (
-              <img 
-                src={video.thumbnail_url} 
-                alt={video.title}
-                className="w-full h-[400px] object-cover rounded-md mb-4"
-              />
+            {video.source === 'youtube' ? (
+              <div className="relative w-full pb-[56.25%] mb-4">
+                <iframe
+                  src={video.video_url}
+                  className="absolute top-0 left-0 w-full h-full rounded-md"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  title={video.title}
+                />
+              </div>
+            ) : (
+              <video 
+                src={video.video_url}
+                controls
+                className="w-full rounded-md mb-4"
+                poster={video.thumbnail_url}
+              >
+                Your browser does not support the video tag.
+              </video>
             )}
             <p className="text-gray-600 mb-4">{video.description}</p>
             <div className="flex items-center gap-4">
