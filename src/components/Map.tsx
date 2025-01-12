@@ -51,6 +51,12 @@ export const Map = () => {
 
   return (
     <div className="space-y-4">
+      <div className="bg-yellow-100 border-l-4 border-yellow-500 p-4 mb-4">
+        <p className="text-yellow-700">
+          ⚠️ This map is for development purposes only. The API key is restricted.
+        </p>
+      </div>
+      
       <div className="flex justify-end">
         <Button
           onClick={() => setIsUploadMode(!isUploadMode)}
