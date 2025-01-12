@@ -35,8 +35,8 @@ const AddVideo = () => {
               onLocationSelect={(lat, lng) =>
                 setSelectedLocation({ lat, lng })
               }
-              initialCenter={{ lat: 37.7749, lng: -122.4194 }}
-              zoom={12}
+              initialCenter={{ lat: 52.2297, lng: 21.0122 }} // Warsaw, Poland coordinates
+              zoom={6}
             />
           </div>
         </div>
