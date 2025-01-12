@@ -25,7 +25,7 @@ const mapContainerStyle = {
   height: "70vh",
 };
 
-const libraries: ("places" | "drawing" | "geometry" | "localContext" | "visualization")[] = ["places"];
+const libraries: ["places"] = ["places"];
 
 type Video = Database['public']['Tables']['videos']['Row'];
 
@@ -270,3 +270,4 @@ export const Map = ({ onLocationSelect, initialCenter = defaultCenter, zoom = 8 
     </div>
   );
 };
+
