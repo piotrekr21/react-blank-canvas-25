@@ -71,7 +71,7 @@ export const Map = ({ onLocationSelect, initialCenter = defaultCenter, zoom = 8 
         .select('*')
         .eq('video_id', videoId)
         .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
-        .single();
+        .maybeSingle(); // Changed from .single() to .maybeSingle()
 
       if (fetchError && fetchError.code !== 'PGRST116') throw fetchError;
 
