@@ -19,6 +19,8 @@ const VideoPage = () => {
   const { data: video, isLoading: isVideoLoading } = useQuery({
     queryKey: ['video', id],
     queryFn: async () => {
+      if (!id) throw new Error('Video ID is required');
+      
       const { data, error } = await supabase
         .from('videos')
         .select(`
@@ -34,11 +36,14 @@ const VideoPage = () => {
       if (error) throw error;
       return data;
     },
+    enabled: !!id,
   });
 
   const { data: comments, isLoading: areCommentsLoading } = useQuery({
     queryKey: ['comments', id],
     queryFn: async () => {
+      if (!id) throw new Error('Video ID is required');
+
       const { data, error } = await supabase
         .from('comments')
         .select('*')
@@ -48,10 +53,13 @@ const VideoPage = () => {
       if (error) throw error;
       return data;
     },
+    enabled: !!id,
   });
 
   const addCommentMutation = useMutation({
     mutationFn: async (content: string) => {
+      if (!id) throw new Error('Video ID is required');
+
       const { error } = await supabase
         .from('comments')
         .insert([
@@ -71,7 +79,8 @@ const VideoPage = () => {
         description: "Your comment has been added successfully.",
       });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Error adding comment:', error);
       toast({
         title: "Error",
         description: "Failed to add comment. Please try again.",
@@ -109,11 +118,11 @@ const VideoPage = () => {
   return (
     <>
       <Helmet>
-        <title>{video.title} - Dashcam Video</title>
-        <meta name="description" content={video.description || `Watch ${video.title} dashcam footage`} />
-        <meta property="og:title" content={`${video.title} - Dashcam Video`} />
-        <meta property="og:description" content={video.description || `Watch ${video.title} dashcam footage`} />
-        {video.thumbnail_url && <meta property="og:image" content={video.thumbnail_url} />}
+        <title>{video?.title || 'Loading...'} - Dashcam Video</title>
+        <meta name="description" content={video?.description || `Watch dashcam footage`} />
+        <meta property="og:title" content={`${video?.title || 'Loading...'} - Dashcam Video`} />
+        <meta property="og:description" content={video?.description || `Watch dashcam footage`} />
+        {video?.thumbnail_url && <meta property="og:image" content={video.thumbnail_url} />}
       </Helmet>
       <Header />
       <div className="container mx-auto p-4">
