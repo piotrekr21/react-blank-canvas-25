@@ -3,12 +3,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ThumbsUp, ThumbsDown, MessageCircle } from "lucide-react";
+import { ThumbsUp, ThumbsDown, MessageCircle, Calendar } from "lucide-react";
 import { Helmet } from "react-helmet";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { Separator } from "@/components/ui/separator";
 
 const VideoPage = () => {
   const { id } = useParams();
@@ -98,7 +99,14 @@ const VideoPage = () => {
     return (
       <>
         <Header />
-        <div className="container mx-auto p-4">Loading...</div>
+        <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+          <div className="container mx-auto p-4">
+            <div className="animate-pulse space-y-4">
+              <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+              <div className="h-[500px] bg-gray-200 rounded"></div>
+            </div>
+          </div>
+        </div>
       </>
     );
   }
@@ -107,7 +115,16 @@ const VideoPage = () => {
     return (
       <>
         <Header />
-        <div className="container mx-auto p-4">Video not found</div>
+        <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+          <div className="container mx-auto p-4">
+            <Card className="max-w-4xl mx-auto">
+              <CardContent className="p-8 text-center">
+                <h2 className="text-2xl font-semibold text-gray-700">Video not found</h2>
+                <p className="text-gray-500 mt-2">The video you're looking for might have been removed or is no longer available.</p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </>
     );
   }
@@ -125,91 +142,115 @@ const VideoPage = () => {
         {video?.thumbnail_url && <meta property="og:image" content={video.thumbnail_url} />}
       </Helmet>
       <Header />
-      <div className="container mx-auto p-4">
-        <Card className="max-w-4xl mx-auto">
-          <CardHeader>
-            <CardTitle className="text-2xl">{video.title}</CardTitle>
-            <CardDescription>Posted on {new Date(video.created_at).toLocaleDateString()}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {video.source === 'youtube' ? (
-              <div className="relative w-full pb-[56.25%] mb-4">
-                <iframe
-                  src={video.video_url}
-                  className="absolute top-0 left-0 w-full h-full rounded-md"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  title={video.title}
-                />
-              </div>
-            ) : (
-              <video 
-                src={video.video_url}
-                controls
-                className="w-full rounded-md mb-4"
-                poster={video.thumbnail_url}
-              >
-                Your browser does not support the video tag.
-              </video>
-            )}
-            <p className="text-gray-600 mb-4">{video.description}</p>
-            <div className="flex items-center gap-4 mb-8">
-              <div className="flex items-center gap-1">
-                <ThumbsUp className="w-4 h-4" />
-                <span>{video.votes.filter(v => v.vote_type).length}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <ThumbsDown className="w-4 h-4" />
-                <span>{video.votes.filter(v => !v.vote_type).length}</span>
-              </div>
-              <div className="text-sm text-gray-600">
-                Score: {score}
-              </div>
-            </div>
-
-            {/* Comments Section */}
-            <div className="border-t pt-4">
-              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <MessageCircle className="w-5 h-5" />
-                Comments
-              </h3>
-              
-              {/* Add Comment */}
-              <div className="mb-6">
-                <Textarea
-                  placeholder="Add a comment..."
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  className="mb-2"
-                />
-                <Button 
-                  onClick={handleAddComment}
-                  disabled={addCommentMutation.isPending || !newComment.trim()}
-                >
-                  {addCommentMutation.isPending ? "Adding..." : "Add Comment"}
-                </Button>
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+        <div className="container mx-auto p-4">
+          <Card className="max-w-5xl mx-auto overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
+            <CardHeader className="bg-gradient-to-r from-purple-50 to-blue-50 border-b">
+              <CardTitle className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-600">
+                {video.title}
+              </CardTitle>
+              <CardDescription className="flex items-center gap-2 text-gray-600">
+                <Calendar className="w-4 h-4" />
+                {new Date(video.created_at).toLocaleDateString()}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="rounded-lg overflow-hidden mb-6 shadow-md">
+                {video.source === 'youtube' ? (
+                  <div className="relative w-full pb-[56.25%]">
+                    <iframe
+                      src={video.video_url}
+                      className="absolute top-0 left-0 w-full h-full"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      title={video.title}
+                    />
+                  </div>
+                ) : (
+                  <video 
+                    src={video.video_url}
+                    controls
+                    className="w-full"
+                    poster={video.thumbnail_url}
+                  >
+                    Your browser does not support the video tag.
+                  </video>
+                )}
               </div>
 
-              {/* Comments List */}
-              {areCommentsLoading ? (
-                <p>Loading comments...</p>
-              ) : comments && comments.length > 0 ? (
-                <div className="space-y-4">
-                  {comments.map((comment) => (
-                    <div key={comment.id} className="border-b pb-4">
-                      <p className="text-sm text-gray-600 mb-1">
-                        Posted on {new Date(comment.created_at).toLocaleDateString()}
-                      </p>
-                      <p>{comment.content}</p>
-                    </div>
-                  ))}
+              <div className="space-y-6">
+                <div className="prose max-w-none">
+                  <p className="text-gray-700 leading-relaxed">{video.description}</p>
                 </div>
-              ) : (
-                <p className="text-gray-500">No comments yet. Be the first to comment!</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+
+                <div className="flex items-center gap-6 py-4">
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <ThumbsUp className="w-5 h-5" />
+                    <span className="font-medium">{video.votes.filter(v => v.vote_type).length}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <ThumbsDown className="w-5 h-5" />
+                    <span className="font-medium">{video.votes.filter(v => !v.vote_type).length}</span>
+                  </div>
+                  <div className="text-sm font-medium text-purple-600">
+                    Score: {score}
+                  </div>
+                </div>
+
+                <Separator className="my-8" />
+
+                <div className="space-y-6">
+                  <h3 className="text-xl font-semibold flex items-center gap-2 text-gray-800">
+                    <MessageCircle className="w-5 h-5" />
+                    Comments
+                  </h3>
+                  
+                  <div className="space-y-4">
+                    <Textarea
+                      placeholder="Share your thoughts..."
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      className="min-h-[100px] resize-none focus:ring-2 focus:ring-purple-500"
+                    />
+                    <Button 
+                      onClick={handleAddComment}
+                      disabled={addCommentMutation.isPending || !newComment.trim()}
+                      className="bg-purple-600 hover:bg-purple-700 text-white"
+                    >
+                      {addCommentMutation.isPending ? "Adding..." : "Add Comment"}
+                    </Button>
+                  </div>
+
+                  <div className="space-y-6 mt-8">
+                    {areCommentsLoading ? (
+                      <div className="animate-pulse space-y-4">
+                        {[1, 2, 3].map((i) => (
+                          <div key={i} className="bg-gray-100 p-4 rounded-lg">
+                            <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
+                            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : comments && comments.length > 0 ? (
+                      comments.map((comment) => (
+                        <div key={comment.id} className="bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
+                          <p className="text-sm text-gray-500 mb-2">
+                            {new Date(comment.created_at).toLocaleDateString()}
+                          </p>
+                          <p className="text-gray-700">{comment.content}</p>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-8 text-gray-500">
+                        No comments yet. Be the first to comment!
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </>
   );
