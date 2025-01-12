@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { Header } from "@/components/Header";
 import {
   Table,
   TableBody,
@@ -169,109 +170,115 @@ const Admin = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg">Loading...</div>
-      </div>
+      <>
+        <Header />
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-lg">Loading...</div>
+        </div>
+      </>
     );
   }
 
   if (!isAdmin) return null;
 
   return (
-    <div className="container mx-auto py-8 space-y-8">
-      <h1 className="text-2xl font-bold mb-6">Admin Dashboard</h1>
+    <>
+      <Header />
+      <div className="container mx-auto py-8 space-y-8">
+        <h1 className="text-2xl font-bold mb-6">Admin Dashboard</h1>
 
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Videos</h2>
-          <Table>
-            <TableCaption>List of all videos</TableCaption>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Title</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Created At</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {videosLoading ? (
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-xl font-semibold mb-4">Videos</h2>
+            <Table>
+              <TableCaption>List of all videos</TableCaption>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center">Loading...</TableCell>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Created At</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
-              ) : videos?.map((video) => (
-                <TableRow key={video.id}>
-                  <TableCell>{video.title}</TableCell>
-                  <TableCell>{video.status}</TableCell>
-                  <TableCell>{new Date(video.created_at).toLocaleDateString()}</TableCell>
-                  <TableCell className="space-x-2">
-                    {video.status === "pending" && (
-                      <>
-                        <Button
-                          size="sm"
-                          onClick={() => handleVideoStatus(video.id, "approved")}
-                        >
-                          <Check className="h-4 w-4" />
-                          Approve
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => handleVideoStatus(video.id, "rejected")}
-                        >
-                          <X className="h-4 w-4" />
-                          Reject
-                        </Button>
-                      </>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+              </TableHeader>
+              <TableBody>
+                {videosLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center">Loading...</TableCell>
+                  </TableRow>
+                ) : videos?.map((video) => (
+                  <TableRow key={video.id}>
+                    <TableCell>{video.title}</TableCell>
+                    <TableCell>{video.status}</TableCell>
+                    <TableCell>{new Date(video.created_at).toLocaleDateString()}</TableCell>
+                    <TableCell className="space-x-2">
+                      {video.status === "pending" && (
+                        <>
+                          <Button
+                            size="sm"
+                            onClick={() => handleVideoStatus(video.id, "approved")}
+                          >
+                            <Check className="h-4 w-4" />
+                            Approve
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleVideoStatus(video.id, "rejected")}
+                          >
+                            <X className="h-4 w-4" />
+                            Reject
+                          </Button>
+                        </>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
 
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Votes</h2>
-          <Table>
-            <TableCaption>List of all votes</TableCaption>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Video ID</TableHead>
-                <TableHead>User ID</TableHead>
-                <TableHead>Vote Type</TableHead>
-                <TableHead>Created At</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {votesLoading ? (
+          <div>
+            <h2 className="text-xl font-semibold mb-4">Votes</h2>
+            <Table>
+              <TableCaption>List of all votes</TableCaption>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center">Loading...</TableCell>
+                  <TableHead>Video ID</TableHead>
+                  <TableHead>User ID</TableHead>
+                  <TableHead>Vote Type</TableHead>
+                  <TableHead>Created At</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
-              ) : votes?.map((vote) => (
-                <TableRow key={vote.id}>
-                  <TableCell>{vote.video_id}</TableCell>
-                  <TableCell>{vote.user_id}</TableCell>
-                  <TableCell>{vote.vote_type ? "Up" : "Down"}</TableCell>
-                  <TableCell>{new Date(vote.created_at).toLocaleDateString()}</TableCell>
-                  <TableCell>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => handleDeleteVote(vote.id)}
-                    >
-                      <Trash className="h-4 w-4" />
-                      Delete
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {votesLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center">Loading...</TableCell>
+                  </TableRow>
+                ) : votes?.map((vote) => (
+                  <TableRow key={vote.id}>
+                    <TableCell>{vote.video_id}</TableCell>
+                    <TableCell>{vote.user_id}</TableCell>
+                    <TableCell>{vote.vote_type ? "Up" : "Down"}</TableCell>
+                    <TableCell>{new Date(vote.created_at).toLocaleDateString()}</TableCell>
+                    <TableCell>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleDeleteVote(vote.id)}
+                      >
+                        <Trash className="h-4 w-4" />
+                        Delete
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
