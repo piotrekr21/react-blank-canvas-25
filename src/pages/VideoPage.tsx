@@ -60,6 +60,10 @@ const VideoPage = () => {
   const addCommentMutation = useMutation({
     mutationFn: async (content: string) => {
       if (!id) throw new Error('Video ID is required');
+      
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+      if (!user) throw new Error('User must be logged in to comment');
 
       const { error } = await supabase
         .from('comments')
@@ -67,6 +71,7 @@ const VideoPage = () => {
           {
             video_id: id,
             content,
+            user_id: user.id
           },
         ]);
 
