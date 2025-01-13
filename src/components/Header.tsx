@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
+import { LogOut, LogIn } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -15,10 +15,13 @@ import {
 export const Header = () => {
   const navigate = useNavigate();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    const checkAdminStatus = async () => {
+    const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
+      setIsAuthenticated(!!session);
+      
       if (session) {
         const { data: profiles } = await supabase
           .from('profiles')
@@ -30,11 +33,24 @@ export const Header = () => {
       }
     };
 
-    checkAdminStatus();
+    checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsAuthenticated(!!session);
+      if (!session) {
+        setIsAdmin(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    navigate("/");
+  };
+
+  const handleLogin = () => {
     navigate("/login");
   };
 
@@ -58,13 +74,15 @@ export const Header = () => {
                   </NavigationMenuLink>
                 </Link>
               </NavigationMenuItem>
-              <NavigationMenuItem>
-                <Link to="/add-video">
-                  <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                    Add Video
-                  </NavigationMenuLink>
-                </Link>
-              </NavigationMenuItem>
+              {isAuthenticated && (
+                <NavigationMenuItem>
+                  <Link to="/add-video">
+                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                      Add Video
+                    </NavigationMenuLink>
+                  </Link>
+                </NavigationMenuItem>
+              )}
               {isAdmin && (
                 <NavigationMenuItem>
                   <Link to="/admin">
@@ -76,14 +94,25 @@ export const Header = () => {
               )}
             </NavigationMenuList>
           </NavigationMenu>
-          <Button 
-            variant="outline"
-            onClick={handleLogout}
-            className="flex items-center gap-2 hover:bg-gray-100"
-          >
-            <LogOut className="h-4 w-4" />
-            Logout
-          </Button>
+          {isAuthenticated ? (
+            <Button 
+              variant="outline"
+              onClick={handleLogout}
+              className="flex items-center gap-2 hover:bg-gray-100"
+            >
+              <LogOut className="h-4 w-4" />
+              Logout
+            </Button>
+          ) : (
+            <Button 
+              variant="outline"
+              onClick={handleLogin}
+              className="flex items-center gap-2 hover:bg-gray-100"
+            >
+              <LogIn className="h-4 w-4" />
+              Login
+            </Button>
+          )}
         </div>
       </div>
     </header>

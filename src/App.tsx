@@ -48,22 +48,9 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <Index />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/top-videos"
-            element={
-              <ProtectedRoute>
-                <TopVideos />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/" element={<Index />} />
+          <Route path="/top-videos" element={<TopVideos />} />
+          <Route path="/video/:id" element={<VideoPage />} />
           <Route
             path="/add-video"
             element={
@@ -77,14 +64,6 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <Admin />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/video/:id"
-            element={
-              <ProtectedRoute>
-                <VideoPage />
               </ProtectedRoute>
             }
           />
