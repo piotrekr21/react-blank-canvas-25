@@ -31,8 +31,20 @@ export const ReportLocationModal = ({ videoId, currentLat, currentLng }: ReportL
     }
 
     try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !user) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to report a location",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const { error } = await supabase.from("location_reports").insert({
         video_id: videoId,
+        user_id: user.id,
         suggested_latitude: selectedLocation.lat,
         suggested_longitude: selectedLocation.lng,
       });
