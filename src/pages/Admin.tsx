@@ -33,6 +33,16 @@ type Vote = {
   created_at: string;
 };
 
+type LocationReport = {
+  id: string;
+  video_id: string;
+  user_id: string;
+  suggested_latitude: number;
+  suggested_longitude: number;
+  status: string;
+  created_at: string;
+};
+
 const Admin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -107,7 +117,6 @@ const Admin = () => {
     enabled: isAdmin,
   });
 
-  // Fetch votes
   const { data: votes, isLoading: votesLoading } = useQuery({
     queryKey: ["admin-votes"],
     queryFn: async () => {
@@ -118,6 +127,20 @@ const Admin = () => {
 
       if (error) throw error;
       return data as Vote[];
+    },
+    enabled: isAdmin,
+  });
+
+  const { data: locationReports, isLoading: locationReportsLoading } = useQuery({
+    queryKey: ["admin-location-reports"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("location_reports")
+        .select("*, videos(title)")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return data as (LocationReport & { videos: { title: string } })[];
     },
     enabled: isAdmin,
   });
@@ -163,6 +186,46 @@ const Admin = () => {
       toast({
         title: "Error",
         description: "Failed to delete vote",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleLocationReportStatus = async (reportId: string, status: "approved" | "rejected") => {
+    try {
+      const report = locationReports?.find(r => r.id === reportId);
+      if (!report) return;
+
+      const { error: reportError } = await supabase
+        .from("location_reports")
+        .update({ status })
+        .eq("id", reportId);
+
+      if (reportError) throw reportError;
+
+      if (status === "approved") {
+        const { error: videoError } = await supabase
+          .from("videos")
+          .update({
+            latitude: report.suggested_latitude,
+            longitude: report.suggested_longitude,
+          })
+          .eq("id", report.video_id);
+
+        if (videoError) throw videoError;
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["admin-location-reports"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-videos"] });
+      
+      toast({
+        title: "Success",
+        description: `Location report ${status} successfully`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update location report status",
         variant: "destructive",
       });
     }
@@ -224,6 +287,59 @@ const Admin = () => {
                             size="sm"
                             variant="destructive"
                             onClick={() => handleVideoStatus(video.id, "rejected")}
+                          >
+                            <X className="h-4 w-4" />
+                            Reject
+                          </Button>
+                        </>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          <div>
+            <h2 className="text-xl font-semibold mb-4">Location Reports</h2>
+            <Table>
+              <TableCaption>List of all location reports</TableCaption>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Video Title</TableHead>
+                  <TableHead>Suggested Location</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Created At</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {locationReportsLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center">Loading...</TableCell>
+                  </TableRow>
+                ) : locationReports?.map((report) => (
+                  <TableRow key={report.id}>
+                    <TableCell>{report.videos?.title}</TableCell>
+                    <TableCell>
+                      {report.suggested_latitude.toFixed(6)}, {report.suggested_longitude.toFixed(6)}
+                    </TableCell>
+                    <TableCell>{report.status}</TableCell>
+                    <TableCell>{new Date(report.created_at).toLocaleDateString()}</TableCell>
+                    <TableCell className="space-x-2">
+                      {report.status === "pending" && (
+                        <>
+                          <Button
+                            size="sm"
+                            onClick={() => handleLocationReportStatus(report.id, "approved")}
+                          >
+                            <Check className="h-4 w-4" />
+                            Approve
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleLocationReportStatus(report.id, "rejected")}
                           >
                             <X className="h-4 w-4" />
                             Reject
