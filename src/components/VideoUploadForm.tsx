@@ -42,8 +42,8 @@ export const VideoUploadForm = ({
     
     if (!videoId) {
       toast({
-        title: "Error",
-        description: "Please enter a valid YouTube URL",
+        title: "Błąd",
+        description: "Proszę wprowadzić prawidłowy adres URL filmu YouTube",
         variant: "destructive",
       });
       return;
@@ -51,8 +51,8 @@ export const VideoUploadForm = ({
 
     if (!latitude || !longitude) {
       toast({
-        title: "Error",
-        description: "Please select a location on the map",
+        title: "Błąd",
+        description: "Proszę wybrać lokalizację na mapie",
         variant: "destructive",
       });
       return;
@@ -63,7 +63,7 @@ export const VideoUploadForm = ({
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       
       if (userError || !user) {
-        throw new Error('User must be logged in to submit videos');
+        throw new Error('Musisz być zalogowany, aby przesłać filmy');
       }
 
       const videoUrl = `https://www.youtube.com/embed/${videoId}`;
@@ -89,8 +89,8 @@ export const VideoUploadForm = ({
       }
 
       toast({
-        title: "Success",
-        description: "Video submitted successfully and pending review",
+        title: "Sukces",
+        description: "Film został przesłany pomyślnie i oczekuje na zatwierdzenie",
       });
 
       queryClient.invalidateQueries({ queryKey: ['videos'] });
@@ -101,8 +101,8 @@ export const VideoUploadForm = ({
     } catch (error) {
       console.error('Submission error:', error);
       toast({
-        title: "Error",
-        description: "Failed to submit video. Please ensure you are logged in and try again.",
+        title: "Błąd",
+        description: "Nie udało się przesłać filmu. Upewnij się, że jesteś zalogowany i spróbuj ponownie.",
         variant: "destructive",
       });
     } finally {
@@ -115,7 +115,7 @@ export const VideoUploadForm = ({
       <div>
         <Input
           type="text"
-          placeholder="Title"
+          placeholder="Tytuł"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           required
@@ -124,25 +124,25 @@ export const VideoUploadForm = ({
           className="mb-2"
         />
         <Textarea
-          placeholder="Description"
+          placeholder="Opis"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           className="min-h-[100px] mb-2"
         />
         <Input
           type="url"
-          placeholder="YouTube Video URL"
+          placeholder="URL filmu YouTube"
           value={youtubeUrl}
           onChange={(e) => setYoutubeUrl(e.target.value)}
           required
           className="mb-2"
         />
         <p className="text-sm text-gray-500">
-          Please enter a valid YouTube video URL (e.g., https://www.youtube.com/watch?v=xxxxx)
+          Wprowadź prawidłowy adres URL filmu YouTube (np. https://www.youtube.com/watch?v=xxxxx)
         </p>
       </div>
       <Button type="submit" disabled={uploading} className="w-full">
-        {uploading ? "Submitting..." : "Submit Video"}
+        {uploading ? "Przesyłanie..." : "Prześlij Film"}
       </Button>
     </form>
   );
