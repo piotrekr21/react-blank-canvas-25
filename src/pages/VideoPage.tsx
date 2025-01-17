@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
+import { ReportLocationModal } from "@/components/ReportLocationModal";
 
 const VideoPage = () => {
   const { id } = useParams();
@@ -188,18 +189,25 @@ const VideoPage = () => {
                   <p className="text-gray-700 leading-relaxed">{video.description}</p>
                 </div>
 
-                <div className="flex items-center gap-6 py-4">
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <ThumbsUp className="w-5 h-5" />
-                    <span className="font-medium">{video.votes.filter(v => v.vote_type).length}</span>
+                <div className="flex items-center justify-between gap-6 py-4">
+                  <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <ThumbsUp className="w-5 h-5" />
+                      <span className="font-medium">{video.votes.filter(v => v.vote_type).length}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <ThumbsDown className="w-5 h-5" />
+                      <span className="font-medium">{video.votes.filter(v => !v.vote_type).length}</span>
+                    </div>
+                    <div className="text-sm font-medium text-purple-600">
+                      Score: {score}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <ThumbsDown className="w-5 h-5" />
-                    <span className="font-medium">{video.votes.filter(v => !v.vote_type).length}</span>
-                  </div>
-                  <div className="text-sm font-medium text-purple-600">
-                    Score: {score}
-                  </div>
+                  <ReportLocationModal
+                    videoId={video.id}
+                    currentLat={Number(video.latitude)}
+                    currentLng={Number(video.longitude)}
+                  />
                 </div>
 
                 <Separator className="my-8" />

@@ -44,6 +44,47 @@ export type Database = {
           },
         ]
       }
+      location_reports: {
+        Row: {
+          created_at: string | null
+          id: string
+          status: string | null
+          suggested_latitude: number
+          suggested_longitude: number
+          updated_at: string | null
+          user_id: string | null
+          video_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          status?: string | null
+          suggested_latitude: number
+          suggested_longitude: number
+          updated_at?: string | null
+          user_id?: string | null
+          video_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          status?: string | null
+          suggested_latitude?: number
+          suggested_longitude?: number
+          updated_at?: string | null
+          user_id?: string | null
+          video_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "location_reports_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
