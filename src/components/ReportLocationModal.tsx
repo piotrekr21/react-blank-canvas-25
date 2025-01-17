@@ -59,22 +59,22 @@ export const ReportLocationModal = ({ videoId, currentLat, currentLng }: ReportL
       <DialogTrigger asChild>
         <Button variant="outline">Report Incorrect Location</Button>
       </DialogTrigger>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Report Incorrect Location</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-muted-foreground">
             Click on the map to select the correct location for this video.
           </p>
-          <div className="h-[400px]">
+          <div className="h-[300px] w-full rounded-md overflow-hidden border">
             <Map
               onLocationSelect={handleLocationSelect}
               initialCenter={{ lat: currentLat, lng: currentLng }}
               zoom={12}
             />
           </div>
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-2 pt-4">
             <Button variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
