@@ -27,8 +27,6 @@ const mapContainerStyle = {
 
 const libraries: ["places"] = ["places"];
 
-type Video = Database['public']['Tables']['videos']['Row'];
-
 export const Map = ({ onLocationSelect, initialCenter = defaultCenter, zoom = 8 }: MapProps) => {
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: "AIzaSyDWE6xVw-cDOC7Ee0SLFXG-5DueJshQlAA",
@@ -72,14 +70,20 @@ export const Map = ({ onLocationSelect, initialCenter = defaultCenter, zoom = 8 
 
   const voteMutation = useMutation({
     mutationFn: async ({ videoId, voteType }: { videoId: string, voteType: boolean }) => {
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !user) {
+        throw new Error('Musisz być zalogowany, aby głosować');
+      }
+
       const { data: existingVote, error: fetchError } = await supabase
         .from('votes')
         .select('*')
         .eq('video_id', videoId)
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+        .eq('user_id', user.id)
         .maybeSingle();
 
-      if (fetchError && fetchError.code !== 'PGRST116') throw fetchError;
+      if (fetchError) throw fetchError;
 
       if (existingVote) {
         const { error } = await supabase
@@ -92,7 +96,7 @@ export const Map = ({ onLocationSelect, initialCenter = defaultCenter, zoom = 8 
           .from('votes')
           .insert({
             video_id: videoId,
-            user_id: (await supabase.auth.getUser()).data.user?.id,
+            user_id: user.id,
             vote_type: voteType,
           });
         if (error) throw error;
@@ -101,14 +105,14 @@ export const Map = ({ onLocationSelect, initialCenter = defaultCenter, zoom = 8 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['votes'] });
       toast({
-        title: "Vote recorded",
-        description: "Your vote has been recorded successfully.",
+        title: "Sukces",
+        description: "Twój głos został zapisany.",
       });
     },
     onError: (error) => {
       toast({
-        title: "Error",
-        description: "Failed to record your vote. Please try again.",
+        title: "Błąd",
+        description: error instanceof Error ? error.message : "Nie udało się zapisać głosu. Spróbuj ponownie.",
         variant: "destructive",
       });
       console.error('Vote error:', error);
@@ -161,6 +165,15 @@ export const Map = ({ onLocationSelect, initialCenter = defaultCenter, zoom = 8 
     const upvotes = videoVotes.filter(v => v.vote_type).length;
     const downvotes = videoVotes.filter(v => !v.vote_type).length;
     return { upvotes, downvotes };
+  };
+
+  const handleVote = async (videoId: string, voteType: boolean) => {
+    try {
+      await voteMutation.mutateAsync({ videoId, voteType });
+    } catch (error) {
+      // Error is handled in mutation's onError
+      console.error('Vote handling error:', error);
+    }
   };
 
   if (loadError) return <div>Error loading maps</div>;
@@ -221,7 +234,7 @@ export const Map = ({ onLocationSelect, initialCenter = defaultCenter, zoom = 8 
                       size="sm"
                       variant="outline"
                       className="flex items-center gap-2"
-                      onClick={() => voteMutation.mutate({ videoId: selectedVideo.id, voteType: true })}
+                      onClick={() => handleVote(selectedVideo.id, true)}
                     >
                       <ThumbsUp className="w-4 h-4" />
                       <span>{getVoteCounts(selectedVideo.id).upvotes}</span>
@@ -230,7 +243,7 @@ export const Map = ({ onLocationSelect, initialCenter = defaultCenter, zoom = 8 
                       size="sm"
                       variant="outline"
                       className="flex items-center gap-2"
-                      onClick={() => voteMutation.mutate({ videoId: selectedVideo.id, voteType: false })}
+                      onClick={() => handleVote(selectedVideo.id, false)}
                     >
                       <ThumbsDown className="w-4 h-4" />
                       <span>{getVoteCounts(selectedVideo.id).downvotes}</span>
