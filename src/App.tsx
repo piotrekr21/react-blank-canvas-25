@@ -11,6 +11,8 @@ import AddVideo from "./pages/AddVideo";
 import Login from "./pages/Login";
 import Admin from "./pages/Admin";
 import VideoPage from "./pages/VideoPage";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import Terms from "./pages/Terms";
 
 const queryClient = new QueryClient();
 
@@ -51,6 +53,8 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/top-videos" element={<TopVideos />} />
           <Route path="/video/:id" element={<VideoPage />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms" element={<Terms />} />
           <Route
             path="/add-video"
             element={

@@ -1,5 +1,6 @@
 import { Map } from "@/components/Map";
 import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -28,7 +29,7 @@ const Index = () => {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex flex-col">
       <Header />
       <main className="flex-1">
         <div className="container mx-auto p-4 animate-fade-in">
@@ -76,6 +77,7 @@ const Index = () => {
           </div>
         </div>
       </main>
+      <Footer />
     </div>
   );
 };
