@@ -6,6 +6,7 @@ import { useToast } from "./ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 
 interface VideoUploadFormProps {
   latitude?: number;
@@ -37,6 +38,7 @@ export const VideoUploadForm = ({
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const getYoutubeVideoId = (url: string) => {
     const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
@@ -47,6 +49,18 @@ export const VideoUploadForm = ({
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
+    // Check authentication first
+    const { data: session } = await supabase.auth.getSession();
+    if (!session.session) {
+      toast({
+        title: "Błąd",
+        description: "Musisz być zalogowany, aby dodać film. Przekierowuję do strony logowania...",
+        variant: "destructive",
+      });
+      navigate("/login");
+      return;
+    }
+
     const videoId = getYoutubeVideoId(youtubeUrl);
     
     if (!videoId) {
@@ -69,12 +83,6 @@ export const VideoUploadForm = ({
 
     setUploading(true);
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      
-      if (userError || !user) {
-        throw new Error('Musisz być zalogowany, aby przesłać filmy');
-      }
-
       const videoUrl = `https://www.youtube.com/embed/${videoId}`;
       const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
       const slug = generateSlug(title);
@@ -90,7 +98,7 @@ export const VideoUploadForm = ({
           longitude,
           status: 'pending',
           source: 'youtube',
-          user_id: user.id,
+          user_id: session.session.user.id,
           slug,
         } as VideoInsert);
 
@@ -109,11 +117,14 @@ export const VideoUploadForm = ({
       setTitle("");
       setDescription("");
       setYoutubeUrl("");
+      
+      // Redirect to home page after successful upload
+      navigate("/");
     } catch (error) {
       console.error('Submission error:', error);
       toast({
         title: "Błąd",
-        description: "Nie udało się przesłać filmu. Upewnij się, że jesteś zalogowany i spróbuj ponownie.",
+        description: "Nie udało się przesłać filmu. Spróbuj ponownie.",
         variant: "destructive",
       });
     } finally {
