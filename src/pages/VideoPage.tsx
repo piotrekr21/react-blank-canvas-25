@@ -96,13 +96,18 @@ const VideoPage = () => {
     },
   });
 
+  const handleAddComment = () => {
+    if (!newComment.trim()) return;
+    addCommentMutation.mutate(newComment);
+  };
+
   const voteMutation = useMutation({
     mutationFn: async ({ voteType }: { voteType: boolean }) => {
       if (!id) throw new Error('Video ID is required');
       
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       if (authError || !user) {
-        throw new Error('Musisz być zalogowany, aby głosować');
+        throw new Error('You must be logged in to vote');
       }
 
       const { data: existingVote, error: fetchError } = await supabase
@@ -115,12 +120,23 @@ const VideoPage = () => {
       if (fetchError) throw fetchError;
 
       if (existingVote) {
-        const { error } = await supabase
-          .from('votes')
-          .update({ vote_type: voteType })
-          .eq('id', existingVote.id);
-        if (error) throw error;
+        if (existingVote.vote_type === voteType) {
+          // If clicking the same vote type, remove the vote
+          const { error } = await supabase
+            .from('votes')
+            .delete()
+            .eq('id', existingVote.id);
+          if (error) throw error;
+        } else {
+          // If clicking different vote type, update the vote
+          const { error } = await supabase
+            .from('votes')
+            .update({ vote_type: voteType })
+            .eq('id', existingVote.id);
+          if (error) throw error;
+        }
       } else {
+        // If no existing vote, insert new vote
         const { error } = await supabase
           .from('votes')
           .insert({
@@ -134,14 +150,14 @@ const VideoPage = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['video', id] });
       toast({
-        title: "Sukces",
-        description: "Twój głos został zapisany.",
+        title: "Success",
+        description: "Your vote has been recorded.",
       });
     },
     onError: (error) => {
       toast({
-        title: "Błąd",
-        description: error instanceof Error ? error.message : "Nie udało się zapisać głosu. Spróbuj ponownie.",
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to save vote. Please try again.",
         variant: "destructive",
       });
     },
