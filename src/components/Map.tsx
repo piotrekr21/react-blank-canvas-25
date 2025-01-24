@@ -9,6 +9,8 @@ import { ThumbsUp, ThumbsDown } from "lucide-react";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 
+type Video = Database['public']['Tables']['videos']['Row'];
+
 interface MapProps {
   onLocationSelect?: (lat: number, lng: number) => void;
   initialCenter?: { lat: number; lng: number };
