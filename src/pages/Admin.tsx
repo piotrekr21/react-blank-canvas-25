@@ -13,8 +13,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Check, X, Trash } from "lucide-react";
+import { Check, X, Trash, Eye } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type Video = {
   id: string;
@@ -23,6 +29,8 @@ type Video = {
   status: "pending" | "approved" | "rejected";
   created_at: string;
   user_id: string;
+  video_url: string;
+  source: string;
 };
 
 type Vote = {
@@ -49,6 +57,7 @@ const Admin = () => {
   const queryClient = useQueryClient();
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
 
   // Check if user is admin
   useEffect(() => {
@@ -231,12 +240,20 @@ const Admin = () => {
     }
   };
 
+  const handleVideoPreview = (video: Video) => {
+    setSelectedVideo(video);
+  };
+
+  const handleClosePreview = () => {
+    setSelectedVideo(null);
+  };
+
   if (isLoading) {
     return (
       <>
         <Header />
         <div className="flex items-center justify-center min-h-screen">
-          <div className="text-lg">Loading...</div>
+          <div className="text-lg">Ładowanie...</div>
         </div>
       </>
     );
@@ -248,48 +265,56 @@ const Admin = () => {
     <>
       <Header />
       <div className="container mx-auto py-8 space-y-8">
-        <h1 className="text-2xl font-bold mb-6">Admin Dashboard</h1>
+        <h1 className="text-2xl font-bold mb-6">Panel Administratora</h1>
 
         <div className="space-y-6">
           <div>
-            <h2 className="text-xl font-semibold mb-4">Videos</h2>
+            <h2 className="text-xl font-semibold mb-4">Filmy</h2>
             <Table>
-              <TableCaption>List of all videos</TableCaption>
+              <TableCaption>Lista wszystkich filmów</TableCaption>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Title</TableHead>
+                  <TableHead>Tytuł</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Created At</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead>Data utworzenia</TableHead>
+                  <TableHead>Akcje</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {videosLoading ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center">Loading...</TableCell>
+                    <TableCell colSpan={4} className="text-center">Ładowanie...</TableCell>
                   </TableRow>
                 ) : videos?.map((video) => (
                   <TableRow key={video.id}>
                     <TableCell>{video.title}</TableCell>
                     <TableCell>{video.status}</TableCell>
-                    <TableCell>{new Date(video.created_at).toLocaleDateString()}</TableCell>
+                    <TableCell>{new Date(video.created_at).toLocaleDateString('pl-PL')}</TableCell>
                     <TableCell className="space-x-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleVideoPreview(video)}
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
+                        Podgląd
+                      </Button>
                       {video.status === "pending" && (
                         <>
                           <Button
                             size="sm"
                             onClick={() => handleVideoStatus(video.id, "approved")}
                           >
-                            <Check className="h-4 w-4" />
-                            Approve
+                            <Check className="h-4 w-4 mr-1" />
+                            Zatwierdź
                           </Button>
                           <Button
                             size="sm"
                             variant="destructive"
                             onClick={() => handleVideoStatus(video.id, "rejected")}
                           >
-                            <X className="h-4 w-4" />
-                            Reject
+                            <X className="h-4 w-4 mr-1" />
+                            Odrzuć
                           </Button>
                         </>
                       )}
@@ -393,6 +418,61 @@ const Admin = () => {
             </Table>
           </div>
         </div>
+
+        <Dialog open={!!selectedVideo} onOpenChange={() => setSelectedVideo(null)}>
+          <DialogContent className="max-w-4xl">
+            <DialogHeader>
+              <DialogTitle>{selectedVideo?.title}</DialogTitle>
+            </DialogHeader>
+            <div className="mt-4">
+              {selectedVideo?.source === 'youtube' ? (
+                <div className="relative w-full pb-[56.25%]">
+                  <iframe
+                    src={selectedVideo?.video_url}
+                    className="absolute top-0 left-0 w-full h-full"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    title={selectedVideo?.title}
+                  />
+                </div>
+              ) : (
+                <video 
+                  src={selectedVideo?.video_url}
+                  controls
+                  className="w-full"
+                >
+                  Your browser does not support the video tag.
+                </video>
+              )}
+              {selectedVideo?.description && (
+                <p className="mt-4 text-gray-700">{selectedVideo.description}</p>
+              )}
+              {selectedVideo?.status === "pending" && (
+                <div className="mt-4 flex justify-end space-x-2">
+                  <Button
+                    onClick={() => {
+                      handleVideoStatus(selectedVideo.id, "approved");
+                      handleClosePreview();
+                    }}
+                  >
+                    <Check className="h-4 w-4 mr-1" />
+                    Zatwierdź
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={() => {
+                      handleVideoStatus(selectedVideo.id, "rejected");
+                      handleClosePreview();
+                    }}
+                  >
+                    <X className="h-4 w-4 mr-1" />
+                    Odrzuć
+                  </Button>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </>
   );
