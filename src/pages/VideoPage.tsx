@@ -82,7 +82,7 @@ const VideoPage = () => {
       queryClient.invalidateQueries({ queryKey: ['comments', id] });
       setNewComment("");
       toast({
-        title: "Comment added",
+        title: "Success",
         description: "Your comment has been added successfully.",
       });
     },
