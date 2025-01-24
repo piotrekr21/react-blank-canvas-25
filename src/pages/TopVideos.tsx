@@ -68,7 +68,7 @@ const TopVideos = () => {
           </h1>
           <div className="grid grid-cols-1 gap-6">
             {topVideos?.map((video, index) => (
-              <Link to={`/video/${video.id}`} key={video.id}>
+              <Link to={`/video/${video.slug}`} key={video.id}>
                 <Card className="relative hover:shadow-lg transition-shadow duration-300 transform hover:scale-[1.01]">
                   <div className="absolute top-4 left-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold">
                     {index + 1}

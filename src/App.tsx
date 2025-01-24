@@ -1,80 +1,32 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
-import TopVideos from "./pages/TopVideos";
-import AddVideo from "./pages/AddVideo";
-import Login from "./pages/Login";
-import Admin from "./pages/Admin";
 import VideoPage from "./pages/VideoPage";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
+import AddVideo from "./pages/AddVideo";
+import TopVideos from "./pages/TopVideos";
+import Admin from "./pages/Admin";
+import Login from "./pages/Login";
 import Terms from "./pages/Terms";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import { Toaster } from "./components/ui/toaster";
+import "./App.css";
 
-const queryClient = new QueryClient();
-
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setIsAuthenticated(!!session);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setIsAuthenticated(!!session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  if (isAuthenticated === null) {
-    return <div>Loading...</div>;
-  }
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" />;
-  }
-
-  return <>{children}</>;
-};
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/video/:slug" element={<VideoPage />} />
+        <Route path="/video/id/:id" element={<VideoPage />} /> {/* Backward compatibility */}
+        <Route path="/add-video" element={<AddVideo />} />
+        <Route path="/top-videos" element={<TopVideos />} />
+        <Route path="/admin" element={<Admin />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+      </Routes>
       <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/" element={<Index />} />
-          <Route path="/top-videos" element={<TopVideos />} />
-          <Route path="/video/:id" element={<VideoPage />} />
-          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-          <Route path="/terms" element={<Terms />} />
-          <Route
-            path="/add-video"
-            element={
-              <ProtectedRoute>
-                <AddVideo />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute>
-                <Admin />
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+    </Router>
+  );
+}
 
 export default App;

@@ -16,6 +16,15 @@ interface VideoUploadFormProps {
 
 type VideoInsert = Database['public']['Tables']['videos']['Insert'];
 
+const generateSlug = (title: string): string => {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+    .replace(/\s+/g, '-') // Replace spaces with hyphens
+    .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
+    .trim();
+};
+
 export const VideoUploadForm = ({ 
   latitude, 
   longitude, 
@@ -68,6 +77,7 @@ export const VideoUploadForm = ({
 
       const videoUrl = `https://www.youtube.com/embed/${videoId}`;
       const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+      const slug = generateSlug(title);
 
       const { error: insertError } = await supabase
         .from('videos')
@@ -81,6 +91,7 @@ export const VideoUploadForm = ({
           status: 'pending',
           source: 'youtube',
           user_id: user.id,
+          slug,
         } as VideoInsert);
 
       if (insertError) {

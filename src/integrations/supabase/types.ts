@@ -110,6 +110,7 @@ export type Database = {
           id: string
           latitude: number
           longitude: number
+          slug: string
           source: string | null
           status: Database["public"]["Enums"]["video_status"] | null
           thumbnail_url: string | null
@@ -124,6 +125,7 @@ export type Database = {
           id?: string
           latitude: number
           longitude: number
+          slug: string
           source?: string | null
           status?: Database["public"]["Enums"]["video_status"] | null
           thumbnail_url?: string | null
@@ -138,6 +140,7 @@ export type Database = {
           id?: string
           latitude?: number
           longitude?: number
+          slug?: string
           source?: string | null
           status?: Database["public"]["Enums"]["video_status"] | null
           thumbnail_url?: string | null
