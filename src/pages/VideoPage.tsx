@@ -96,9 +96,63 @@ const VideoPage = () => {
     },
   });
 
-  const handleAddComment = () => {
-    if (!newComment.trim()) return;
-    addCommentMutation.mutate(newComment);
+  const voteMutation = useMutation({
+    mutationFn: async ({ voteType }: { voteType: boolean }) => {
+      if (!id) throw new Error('Video ID is required');
+      
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        throw new Error('Musisz być zalogowany, aby głosować');
+      }
+
+      const { data: existingVote, error: fetchError } = await supabase
+        .from('votes')
+        .select('*')
+        .eq('video_id', id)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (fetchError) throw fetchError;
+
+      if (existingVote) {
+        const { error } = await supabase
+          .from('votes')
+          .update({ vote_type: voteType })
+          .eq('id', existingVote.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('votes')
+          .insert({
+            video_id: id,
+            user_id: user.id,
+            vote_type: voteType,
+          });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['video', id] });
+      toast({
+        title: "Sukces",
+        description: "Twój głos został zapisany.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Błąd",
+        description: error instanceof Error ? error.message : "Nie udało się zapisać głosu. Spróbuj ponownie.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleVote = async (voteType: boolean) => {
+    try {
+      await voteMutation.mutateAsync({ voteType });
+    } catch (error) {
+      console.error('Vote handling error:', error);
+    }
   };
 
   if (isVideoLoading) {
@@ -135,8 +189,8 @@ const VideoPage = () => {
     );
   }
 
-  const score = video.votes.reduce((acc: number, vote: { vote_type: boolean }) => 
-    acc + (vote.vote_type ? 1 : -1), 0);
+  const upvotes = video?.votes?.filter(v => v.vote_type).length || 0;
+  const downvotes = video?.votes?.filter(v => !v.vote_type).length || 0;
 
   return (
     <>
@@ -191,17 +245,24 @@ const VideoPage = () => {
 
                 <div className="flex items-center justify-between gap-6 py-4">
                   <div className="flex items-center gap-6">
-                    <div className="flex items-center gap-2 text-gray-600">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleVote(true)}
+                      className="flex items-center gap-2"
+                    >
                       <ThumbsUp className="w-5 h-5" />
-                      <span className="font-medium">{video.votes.filter(v => v.vote_type).length}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-600">
+                      <span>{upvotes}</span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleVote(false)}
+                      className="flex items-center gap-2"
+                    >
                       <ThumbsDown className="w-5 h-5" />
-                      <span className="font-medium">{video.votes.filter(v => !v.vote_type).length}</span>
-                    </div>
-                    <div className="text-sm font-medium text-purple-600">
-                      Score: {score}
-                    </div>
+                      <span>{downvotes}</span>
+                    </Button>
                   </div>
                   <ReportLocationModal
                     videoId={video.id}
