@@ -63,14 +63,14 @@ export const Header = () => {
               <NavigationMenuItem>
                 <Link to="/">
                   <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                    Homepage
+                    Strona Główna
                   </NavigationMenuLink>
                 </Link>
               </NavigationMenuItem>
               <NavigationMenuItem>
                 <Link to="/top-videos">
                   <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                    Top Videos
+                    Najlepsze Filmy
                   </NavigationMenuLink>
                 </Link>
               </NavigationMenuItem>
@@ -78,7 +78,7 @@ export const Header = () => {
                 <NavigationMenuItem>
                   <Link to="/add-video">
                     <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                      Add Video
+                      Dodaj Film
                     </NavigationMenuLink>
                   </Link>
                 </NavigationMenuItem>
@@ -87,7 +87,7 @@ export const Header = () => {
                 <NavigationMenuItem>
                   <Link to="/admin">
                     <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                      Admin
+                      Panel Admina
                     </NavigationMenuLink>
                   </Link>
                 </NavigationMenuItem>
@@ -101,7 +101,7 @@ export const Header = () => {
               className="flex items-center gap-2 hover:bg-gray-100"
             >
               <LogOut className="h-4 w-4" />
-              Logout
+              Wyloguj
             </Button>
           ) : (
             <Button 
@@ -110,7 +110,7 @@ export const Header = () => {
               className="flex items-center gap-2 hover:bg-gray-100"
             >
               <LogIn className="h-4 w-4" />
-              Login
+              Zaloguj
             </Button>
           )}
         </div>

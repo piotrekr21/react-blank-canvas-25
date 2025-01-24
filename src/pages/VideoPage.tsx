@@ -82,15 +82,15 @@ const VideoPage = () => {
       queryClient.invalidateQueries({ queryKey: ['comments', id] });
       setNewComment("");
       toast({
-        title: "Success",
-        description: "Your comment has been added successfully.",
+        title: "Sukces",
+        description: "Twój komentarz został dodany pomyślnie.",
       });
     },
     onError: (error) => {
       console.error('Error adding comment:', error);
       toast({
-        title: "Error",
-        description: "Failed to add comment. Please try again.",
+        title: "Błąd",
+        description: "Nie udało się dodać komentarza. Spróbuj ponownie.",
         variant: "destructive",
       });
     },
@@ -107,7 +107,7 @@ const VideoPage = () => {
       
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       if (authError || !user) {
-        throw new Error('You must be logged in to vote');
+        throw new Error('Musisz być zalogowany, aby głosować');
       }
 
       const { data: existingVote, error: fetchError } = await supabase
@@ -121,14 +121,12 @@ const VideoPage = () => {
 
       if (existingVote) {
         if (existingVote.vote_type === voteType) {
-          // If clicking the same vote type, remove the vote
           const { error } = await supabase
             .from('votes')
             .delete()
             .eq('id', existingVote.id);
           if (error) throw error;
         } else {
-          // If clicking different vote type, update the vote
           const { error } = await supabase
             .from('votes')
             .update({ vote_type: voteType })
@@ -136,7 +134,6 @@ const VideoPage = () => {
           if (error) throw error;
         }
       } else {
-        // If no existing vote, insert new vote
         const { error } = await supabase
           .from('votes')
           .insert({
@@ -150,14 +147,14 @@ const VideoPage = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['video', id] });
       toast({
-        title: "Success",
-        description: "Your vote has been recorded.",
+        title: "Sukces",
+        description: "Twój głos został zapisany.",
       });
     },
     onError: (error) => {
       toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to save vote. Please try again.",
+        title: "Błąd",
+        description: error instanceof Error ? error.message : "Nie udało się zapisać głosu. Spróbuj ponownie.",
         variant: "destructive",
       });
     },
@@ -195,8 +192,8 @@ const VideoPage = () => {
           <div className="container mx-auto p-4">
             <Card className="max-w-4xl mx-auto">
               <CardContent className="p-8 text-center">
-                <h2 className="text-2xl font-semibold text-gray-700">Video not found</h2>
-                <p className="text-gray-500 mt-2">The video you're looking for might have been removed or is no longer available.</p>
+                <h2 className="text-2xl font-semibold text-gray-700">Film nie został znaleziony</h2>
+                <p className="text-gray-500 mt-2">Film, którego szukasz, mógł zostać usunięty lub jest niedostępny.</p>
               </CardContent>
             </Card>
           </div>
@@ -211,10 +208,10 @@ const VideoPage = () => {
   return (
     <>
       <Helmet>
-        <title>{video?.title || 'Loading...'} - Dashcam Video</title>
-        <meta name="description" content={video?.description || `Watch dashcam footage`} />
-        <meta property="og:title" content={`${video?.title || 'Loading...'} - Dashcam Video`} />
-        <meta property="og:description" content={video?.description || `Watch dashcam footage`} />
+        <title>{video?.title || 'Ładowanie...'} - Film z Kamery</title>
+        <meta name="description" content={video?.description || `Obejrzyj nagranie z kamery samochodowej`} />
+        <meta property="og:title" content={`${video?.title || 'Ładowanie...'} - Film z Kamery`} />
+        <meta property="og:description" content={video?.description || `Obejrzyj nagranie z kamery samochodowej`} />
         {video?.thumbnail_url && <meta property="og:image" content={video.thumbnail_url} />}
       </Helmet>
       <Header />
@@ -227,7 +224,7 @@ const VideoPage = () => {
               </CardTitle>
               <CardDescription className="flex items-center gap-2 text-gray-600">
                 <Calendar className="w-4 h-4" />
-                {new Date(video.created_at).toLocaleDateString()}
+                {new Date(video.created_at).toLocaleDateString('pl-PL')}
               </CardDescription>
             </CardHeader>
             <CardContent className="p-6">
@@ -292,12 +289,12 @@ const VideoPage = () => {
                 <div className="space-y-6">
                   <h3 className="text-xl font-semibold flex items-center gap-2 text-gray-800">
                     <MessageCircle className="w-5 h-5" />
-                    Comments
+                    Komentarze
                   </h3>
                   
                   <div className="space-y-4">
                     <Textarea
-                      placeholder="Share your thoughts..."
+                      placeholder="Podziel się swoją opinią..."
                       value={newComment}
                       onChange={(e) => setNewComment(e.target.value)}
                       className="min-h-[100px] resize-none focus:ring-2 focus:ring-purple-500"
@@ -307,7 +304,7 @@ const VideoPage = () => {
                       disabled={addCommentMutation.isPending || !newComment.trim()}
                       className="bg-purple-600 hover:bg-purple-700 text-white"
                     >
-                      {addCommentMutation.isPending ? "Adding..." : "Add Comment"}
+                      {addCommentMutation.isPending ? "Dodawanie..." : "Dodaj Komentarz"}
                     </Button>
                   </div>
 
@@ -325,14 +322,14 @@ const VideoPage = () => {
                       comments.map((comment) => (
                         <div key={comment.id} className="bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
                           <p className="text-sm text-gray-500 mb-2">
-                            {new Date(comment.created_at).toLocaleDateString()}
+                            {new Date(comment.created_at).toLocaleDateString('pl-PL')}
                           </p>
                           <p className="text-gray-700">{comment.content}</p>
                         </div>
                       ))
                     ) : (
                       <div className="text-center py-8 text-gray-500">
-                        No comments yet. Be the first to comment!
+                        Brak komentarzy. Bądź pierwszy!
                       </div>
                     )}
                   </div>

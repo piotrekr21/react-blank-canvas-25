@@ -34,7 +34,7 @@ const Index = () => {
       <main className="flex-1">
         <div className="container mx-auto p-4 animate-fade-in">
           <h1 className="text-3xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-600">
-            Dashcam Videos Map
+            Mapa Filmów z Kamer Samochodowych
           </h1>
           <Card className="mb-8 shadow-md hover:shadow-lg transition-shadow duration-300">
             <CardContent className="p-0">
@@ -43,7 +43,7 @@ const Index = () => {
           </Card>
           
           <div className="mt-12">
-            <h2 className="text-2xl font-semibold mb-6 text-gray-800">Latest Videos</h2>
+            <h2 className="text-2xl font-semibold mb-6 text-gray-800">Najnowsze Filmy</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {latestVideos?.map((video) => (
                 <Link 
@@ -55,7 +55,7 @@ const Index = () => {
                     <CardHeader>
                       <CardTitle className="text-xl">{video.title}</CardTitle>
                       <CardDescription>
-                        {new Date(video.created_at).toLocaleDateString()}
+                        {new Date(video.created_at).toLocaleDateString('pl-PL')}
                       </CardDescription>
                     </CardHeader>
                     <CardContent>

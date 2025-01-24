@@ -69,15 +69,15 @@ export const ReportLocationModal = ({ videoId, currentLat, currentLng }: ReportL
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">Report Incorrect Location</Button>
+        <Button variant="outline">Zgłoś Nieprawidłową Lokalizację</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Report Incorrect Location</DialogTitle>
+          <DialogTitle>Zgłoś Nieprawidłową Lokalizację</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Click on the map to select the correct location for this video.
+            Kliknij na mapie, aby wybrać prawidłową lokalizację dla tego filmu.
           </p>
           <div className="h-[300px] w-full rounded-md overflow-hidden border">
             <Map
@@ -88,9 +88,9 @@ export const ReportLocationModal = ({ videoId, currentLat, currentLng }: ReportL
           </div>
           <div className="flex justify-end gap-2 pt-4">
             <Button variant="outline" onClick={() => setOpen(false)}>
-              Cancel
+              Anuluj
             </Button>
-            <Button onClick={handleSubmit}>Submit Report</Button>
+            <Button onClick={handleSubmit}>Wyślij Zgłoszenie</Button>
           </div>
         </div>
       </DialogContent>

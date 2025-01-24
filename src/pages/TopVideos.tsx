@@ -64,7 +64,7 @@ const TopVideos = () => {
       <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
         <div className="container mx-auto p-4 animate-fade-in">
           <h1 className="text-3xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-600">
-            Top Dashcam Videos
+            Najlepsze Filmy z Kamer
           </h1>
           <div className="grid grid-cols-1 gap-6">
             {topVideos?.map((video, index) => (
@@ -75,7 +75,7 @@ const TopVideos = () => {
                   </div>
                   <CardHeader className="pl-16">
                     <CardTitle>{video.title}</CardTitle>
-                    <CardDescription>Posted on {new Date(video.created_at).toLocaleDateString()}</CardDescription>
+                    <CardDescription>Dodano {new Date(video.created_at).toLocaleDateString('pl-PL')}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="flex gap-4">
