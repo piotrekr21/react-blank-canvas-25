@@ -31,7 +31,6 @@ const VideoPage = () => {
         `)
         .eq('status', 'approved');
 
-      // If we have a slug, use it; otherwise fall back to id
       if (slug) {
         query = query.eq('slug', slug);
       } else if (id) {
@@ -49,25 +48,25 @@ const VideoPage = () => {
   });
 
   const { data: comments, isLoading: areCommentsLoading } = useQuery({
-    queryKey: ['comments', id],
+    queryKey: ['comments', video?.id],
     queryFn: async () => {
-      if (!id) throw new Error('Video ID is required');
+      if (!video?.id) throw new Error('Video ID is required');
 
       const { data, error } = await supabase
         .from('comments')
         .select('*')
-        .eq('video_id', id)
+        .eq('video_id', video.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       return data;
     },
-    enabled: !!id,
+    enabled: !!video?.id,
   });
 
   const addCommentMutation = useMutation({
     mutationFn: async (content: string) => {
-      if (!id) throw new Error('Video ID is required');
+      if (!video?.id) throw new Error('Video ID is required');
       
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError) throw userError;
@@ -77,7 +76,7 @@ const VideoPage = () => {
         .from('comments')
         .insert([
           {
-            video_id: id,
+            video_id: video.id,
             content,
             user_id: user.id
           },
@@ -86,27 +85,22 @@ const VideoPage = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['comments', id] });
+      queryClient.invalidateQueries({ queryKey: ['comments', video?.id] });
       setNewComment("");
       toast({
-        title: "Sukces",
-        description: "Twój komentarz został dodany pomyślnie.",
+        title: "Success",
+        description: "Your comment has been added successfully.",
       });
     },
     onError: (error) => {
       console.error('Error adding comment:', error);
       toast({
-        title: "Błąd",
-        description: "Nie udało się dodać komentarza. Spróbuj ponownie.",
+        title: "Error",
+        description: "Failed to add comment. Please try again.",
         variant: "destructive",
       });
     },
   });
-
-  const handleAddComment = () => {
-    if (!newComment.trim()) return;
-    addCommentMutation.mutate(newComment);
-  };
 
   const voteMutation = useMutation({
     mutationFn: async ({ voteType }: { voteType: boolean }) => {
@@ -199,8 +193,8 @@ const VideoPage = () => {
           <div className="container mx-auto p-4">
             <Card className="max-w-4xl mx-auto">
               <CardContent className="p-8 text-center">
-                <h2 className="text-2xl font-semibold text-gray-700">Film nie został znaleziony</h2>
-                <p className="text-gray-500 mt-2">Film, którego szukasz, mógł zostać usunięty lub jest niedostępny.</p>
+                <h2 className="text-2xl font-semibold text-gray-700">Video not found</h2>
+                <p className="text-gray-500 mt-2">The video you're looking for might have been removed or is unavailable.</p>
               </CardContent>
             </Card>
           </div>
@@ -208,6 +202,11 @@ const VideoPage = () => {
       </>
     );
   }
+
+  const handleAddComment = () => {
+    if (!newComment.trim()) return;
+    addCommentMutation.mutate(newComment);
+  };
 
   const upvotes = video?.votes?.filter(v => v.vote_type).length || 0;
   const downvotes = video?.votes?.filter(v => !v.vote_type).length || 0;
@@ -348,6 +347,3 @@ const VideoPage = () => {
       </div>
     </>
   );
-};
-
-export default VideoPage;
