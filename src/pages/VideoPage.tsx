@@ -347,3 +347,6 @@ const VideoPage = () => {
       </div>
     </>
   );
+};
+
+export default VideoPage;
