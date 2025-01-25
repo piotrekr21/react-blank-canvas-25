@@ -13,14 +13,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Check, X, Trash, Eye } from "lucide-react";
+import { Check, X, Trash, Eye, Edit2 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 type Video = {
   id: string;
@@ -33,24 +36,6 @@ type Video = {
   source: string;
 };
 
-type Vote = {
-  id: string;
-  video_id: string;
-  user_id: string;
-  vote_type: boolean;
-  created_at: string;
-};
-
-type LocationReport = {
-  id: string;
-  video_id: string;
-  user_id: string;
-  suggested_latitude: number;
-  suggested_longitude: number;
-  status: string;
-  created_at: string;
-};
-
 const Admin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -58,6 +43,9 @@ const Admin = () => {
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
+  const [editMode, setEditMode] = useState(false);
+  const [editedTitle, setEditedTitle] = useState("");
+  const [editedDescription, setEditedDescription] = useState("");
 
   // Check if user is admin
   useEffect(() => {
@@ -126,34 +114,6 @@ const Admin = () => {
     enabled: isAdmin,
   });
 
-  const { data: votes, isLoading: votesLoading } = useQuery({
-    queryKey: ["admin-votes"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("votes")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      return data as Vote[];
-    },
-    enabled: isAdmin,
-  });
-
-  const { data: locationReports, isLoading: locationReportsLoading } = useQuery({
-    queryKey: ["admin-location-reports"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("location_reports")
-        .select("*, videos(title)")
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      return data as (LocationReport & { videos: { title: string } })[];
-    },
-    enabled: isAdmin,
-  });
-
   const handleVideoStatus = async (videoId: string, status: "approved" | "rejected") => {
     try {
       const { error } = await supabase
@@ -177,64 +137,32 @@ const Admin = () => {
     }
   };
 
-  const handleDeleteVote = async (voteId: string) => {
+  const handleDeleteVideo = async (videoId: string) => {
+    if (!confirm("Are you sure you want to delete this video? This action cannot be undone.")) {
+      return;
+    }
+
     try {
       const { error } = await supabase
-        .from("votes")
+        .from("videos")
         .delete()
-        .eq("id", voteId);
+        .eq("id", videoId);
 
       if (error) throw error;
 
-      queryClient.invalidateQueries({ queryKey: ["admin-votes"] });
-      toast({
-        title: "Success",
-        description: "Vote deleted successfully",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete vote",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleLocationReportStatus = async (reportId: string, status: "approved" | "rejected") => {
-    try {
-      const report = locationReports?.find(r => r.id === reportId);
-      if (!report) return;
-
-      const { error: reportError } = await supabase
-        .from("location_reports")
-        .update({ status })
-        .eq("id", reportId);
-
-      if (reportError) throw reportError;
-
-      if (status === "approved") {
-        const { error: videoError } = await supabase
-          .from("videos")
-          .update({
-            latitude: report.suggested_latitude,
-            longitude: report.suggested_longitude,
-          })
-          .eq("id", report.video_id);
-
-        if (videoError) throw videoError;
-      }
-
-      queryClient.invalidateQueries({ queryKey: ["admin-location-reports"] });
       queryClient.invalidateQueries({ queryKey: ["admin-videos"] });
-      
       toast({
         title: "Success",
-        description: `Location report ${status} successfully`,
+        description: "Video deleted successfully",
       });
+      
+      if (selectedVideo?.id === videoId) {
+        setSelectedVideo(null);
+      }
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to update location report status",
+        description: "Failed to delete video",
         variant: "destructive",
       });
     }
@@ -242,10 +170,44 @@ const Admin = () => {
 
   const handleVideoPreview = (video: Video) => {
     setSelectedVideo(video);
+    setEditedTitle(video.title);
+    setEditedDescription(video.description || "");
+    setEditMode(false);
   };
 
   const handleClosePreview = () => {
     setSelectedVideo(null);
+    setEditMode(false);
+  };
+
+  const handleEditSave = async () => {
+    if (!selectedVideo) return;
+
+    try {
+      const { error } = await supabase
+        .from("videos")
+        .update({
+          title: editedTitle,
+          description: editedDescription,
+        })
+        .eq("id", selectedVideo.id);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ["admin-videos"] });
+      toast({
+        title: "Success",
+        description: "Video updated successfully",
+      });
+      setEditMode(false);
+      setSelectedVideo(prev => prev ? { ...prev, title: editedTitle, description: editedDescription } : null);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update video",
+        variant: "destructive",
+      });
+    }
   };
 
   if (isLoading) {
@@ -318,98 +280,13 @@ const Admin = () => {
                           </Button>
                         </>
                       )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-
-          <div>
-            <h2 className="text-xl font-semibold mb-4">Location Reports</h2>
-            <Table>
-              <TableCaption>List of all location reports</TableCaption>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Video Title</TableHead>
-                  <TableHead>Suggested Location</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Created At</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {locationReportsLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center">Loading...</TableCell>
-                  </TableRow>
-                ) : locationReports?.map((report) => (
-                  <TableRow key={report.id}>
-                    <TableCell>{report.videos?.title}</TableCell>
-                    <TableCell>
-                      {report.suggested_latitude.toFixed(6)}, {report.suggested_longitude.toFixed(6)}
-                    </TableCell>
-                    <TableCell>{report.status}</TableCell>
-                    <TableCell>{new Date(report.created_at).toLocaleDateString()}</TableCell>
-                    <TableCell className="space-x-2">
-                      {report.status === "pending" && (
-                        <>
-                          <Button
-                            size="sm"
-                            onClick={() => handleLocationReportStatus(report.id, "approved")}
-                          >
-                            <Check className="h-4 w-4" />
-                            Approve
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => handleLocationReportStatus(report.id, "rejected")}
-                          >
-                            <X className="h-4 w-4" />
-                            Reject
-                          </Button>
-                        </>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-
-          <div>
-            <h2 className="text-xl font-semibold mb-4">Votes</h2>
-            <Table>
-              <TableCaption>List of all votes</TableCaption>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Video ID</TableHead>
-                  <TableHead>User ID</TableHead>
-                  <TableHead>Vote Type</TableHead>
-                  <TableHead>Created At</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {votesLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center">Loading...</TableCell>
-                  </TableRow>
-                ) : votes?.map((vote) => (
-                  <TableRow key={vote.id}>
-                    <TableCell>{vote.video_id}</TableCell>
-                    <TableCell>{vote.user_id}</TableCell>
-                    <TableCell>{vote.vote_type ? "Up" : "Down"}</TableCell>
-                    <TableCell>{new Date(vote.created_at).toLocaleDateString()}</TableCell>
-                    <TableCell>
                       <Button
                         size="sm"
                         variant="destructive"
-                        onClick={() => handleDeleteVote(vote.id)}
+                        onClick={() => handleDeleteVideo(video.id)}
                       >
-                        <Trash className="h-4 w-4" />
-                        Delete
+                        <Trash className="h-4 w-4 mr-1" />
+                        Usuń
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -417,12 +294,41 @@ const Admin = () => {
               </TableBody>
             </Table>
           </div>
+
         </div>
 
         <Dialog open={!!selectedVideo} onOpenChange={() => setSelectedVideo(null)}>
           <DialogContent className="max-w-4xl">
             <DialogHeader>
-              <DialogTitle>{selectedVideo?.title}</DialogTitle>
+              <DialogTitle className="flex justify-between items-center">
+                {editMode ? (
+                  <Input
+                    value={editedTitle}
+                    onChange={(e) => setEditedTitle(e.target.value)}
+                    className="w-full"
+                  />
+                ) : (
+                  selectedVideo?.title
+                )}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setEditMode(!editMode)}
+                >
+                  <Edit2 className="h-4 w-4 mr-1" />
+                  {editMode ? "Cancel" : "Edit"}
+                </Button>
+              </DialogTitle>
+              {editMode && (
+                <DialogDescription>
+                  <Textarea
+                    value={editedDescription}
+                    onChange={(e) => setEditedDescription(e.target.value)}
+                    className="mt-2"
+                    placeholder="Video description"
+                  />
+                </DialogDescription>
+              )}
             </DialogHeader>
             <div className="mt-4">
               {selectedVideo?.source === 'youtube' ? (
@@ -444,10 +350,17 @@ const Admin = () => {
                   Your browser does not support the video tag.
                 </video>
               )}
-              {selectedVideo?.description && (
+              {!editMode && selectedVideo?.description && (
                 <p className="mt-4 text-gray-700">{selectedVideo.description}</p>
               )}
-              {selectedVideo?.status === "pending" && (
+              {editMode && (
+                <div className="mt-4 flex justify-end">
+                  <Button onClick={handleEditSave}>
+                    Save Changes
+                  </Button>
+                </div>
+              )}
+              {selectedVideo?.status === "pending" && !editMode && (
                 <div className="mt-4 flex justify-end space-x-2">
                   <Button
                     onClick={() => {
