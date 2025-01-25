@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Header } from "@/components/Header";
 import {
   Table,
@@ -34,6 +34,27 @@ type Video = {
   user_id: string;
   video_url: string;
   source: string;
+};
+
+type User = {
+  id: string;
+  email: string;
+  created_at: string;
+  role: "admin" | "user";
+};
+
+type Vote = {
+  id: string;
+  video_id: string;
+  user_id: string;
+  vote_type: boolean;
+  created_at: string;
+  video: {
+    title: string;
+  };
+  user: {
+    email: string;
+  };
 };
 
 const Admin = () => {
@@ -110,6 +131,51 @@ const Admin = () => {
 
       if (error) throw error;
       return data as Video[];
+    },
+    enabled: isAdmin,
+  });
+
+  const { data: users, isLoading: usersLoading } = useQuery({
+    queryKey: ["admin-users"],
+    queryFn: async () => {
+      const { data: profiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, role, created_at");
+
+      if (profilesError) throw profilesError;
+
+      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+      if (authError) throw authError;
+
+      const combinedUsers = profiles.map(profile => {
+        const authUser = authUsers.users.find(u => u.id === profile.id);
+        return {
+          id: profile.id,
+          email: authUser?.email || "Unknown",
+          created_at: profile.created_at,
+          role: profile.role,
+        };
+      });
+
+      return combinedUsers as User[];
+    },
+    enabled: isAdmin,
+  });
+
+  const { data: votes, isLoading: votesLoading } = useQuery({
+    queryKey: ["admin-votes"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("votes")
+        .select(`
+          *,
+          video:videos(title),
+          user:profiles(id)
+        `)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return data as Vote[];
     },
     enabled: isAdmin,
   });
@@ -215,7 +281,7 @@ const Admin = () => {
       <>
         <Header />
         <div className="flex items-center justify-center min-h-screen">
-          <div className="text-lg">Ładowanie...</div>
+          <div className="text-lg">Loading...</div>
         </div>
       </>
     );
@@ -227,25 +293,25 @@ const Admin = () => {
     <>
       <Header />
       <div className="container mx-auto py-8 space-y-8">
-        <h1 className="text-2xl font-bold mb-6">Panel Administratora</h1>
+        <h1 className="text-2xl font-bold mb-6">Admin Panel</h1>
 
         <div className="space-y-6">
           <div>
-            <h2 className="text-xl font-semibold mb-4">Filmy</h2>
+            <h2 className="text-xl font-semibold mb-4">Videos</h2>
             <Table>
-              <TableCaption>Lista wszystkich filmów</TableCaption>
+              <TableCaption>List of all videos</TableCaption>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Tytuł</TableHead>
+                  <TableHead>Title</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Data utworzenia</TableHead>
-                  <TableHead>Akcje</TableHead>
+                  <TableHead>Created At</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {videosLoading ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center">Ładowanie...</TableCell>
+                    <TableCell colSpan={4} className="text-center">Loading...</TableCell>
                   </TableRow>
                 ) : videos?.map((video) => (
                   <TableRow key={video.id}>
@@ -259,7 +325,7 @@ const Admin = () => {
                         onClick={() => handleVideoPreview(video)}
                       >
                         <Eye className="h-4 w-4 mr-1" />
-                        Podgląd
+                        Preview
                       </Button>
                       {video.status === "pending" && (
                         <>
@@ -268,7 +334,7 @@ const Admin = () => {
                             onClick={() => handleVideoStatus(video.id, "approved")}
                           >
                             <Check className="h-4 w-4 mr-1" />
-                            Zatwierdź
+                            Approve
                           </Button>
                           <Button
                             size="sm"
@@ -276,7 +342,7 @@ const Admin = () => {
                             onClick={() => handleVideoStatus(video.id, "rejected")}
                           >
                             <X className="h-4 w-4 mr-1" />
-                            Odrzuć
+                            Reject
                           </Button>
                         </>
                       )}
@@ -286,7 +352,7 @@ const Admin = () => {
                         onClick={() => handleDeleteVideo(video.id)}
                       >
                         <Trash className="h-4 w-4 mr-1" />
-                        Usuń
+                        Delete
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -295,6 +361,59 @@ const Admin = () => {
             </Table>
           </div>
 
+          <div>
+            <h2 className="text-xl font-semibold mb-4">Users</h2>
+            <Table>
+              <TableCaption>List of all users</TableCaption>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Created At</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {usersLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-center">Loading...</TableCell>
+                  </TableRow>
+                ) : users?.map((user) => (
+                  <TableRow key={user.id}>
+                    <TableCell>{user.email}</TableCell>
+                    <TableCell>{user.role}</TableCell>
+                    <TableCell>{new Date(user.created_at).toLocaleDateString('pl-PL')}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          <div>
+            <h2 className="text-xl font-semibold mb-4">Votes</h2>
+            <Table>
+              <TableCaption>List of all votes</TableCaption>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Video</TableHead>
+                  <TableHead>Vote Type</TableHead>
+                  <TableHead>Created At</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {votesLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-center">Loading...</TableCell>
+                  </TableRow>
+                ) : votes?.map((vote) => (
+                  <TableRow key={vote.id}>
+                    <TableCell>{vote.video?.title || "Deleted video"}</TableCell>
+                    <TableCell>{vote.vote_type ? "Upvote" : "Downvote"}</TableCell>
+                    <TableCell>{new Date(vote.created_at).toLocaleDateString('pl-PL')}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </div>
 
         <Dialog open={!!selectedVideo} onOpenChange={() => setSelectedVideo(null)}>
@@ -369,7 +488,7 @@ const Admin = () => {
                     }}
                   >
                     <Check className="h-4 w-4 mr-1" />
-                    Zatwierdź
+                    Approve
                   </Button>
                   <Button
                     variant="destructive"
@@ -379,7 +498,7 @@ const Admin = () => {
                     }}
                   >
                     <X className="h-4 w-4 mr-1" />
-                    Odrzuć
+                    Reject
                   </Button>
                 </div>
               )}
