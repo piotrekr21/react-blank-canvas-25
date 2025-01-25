@@ -48,7 +48,7 @@ const Index = () => {
               {latestVideos?.map((video) => (
                 <Link 
                   key={video.id} 
-                  to={`/video/${video.id}`} 
+                  to={`/video/${video.slug}`} 
                   className="transform transition-all duration-300 hover:scale-[1.02]"
                 >
                   <Card className="h-full hover:shadow-lg transition-shadow duration-300">
