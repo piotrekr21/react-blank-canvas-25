@@ -35,6 +35,8 @@ type Video = {
   video_url: string;
   latitude: number;
   longitude: number;
+  source: string | null;
+  slug: string;
 };
 
 type Profile = {
