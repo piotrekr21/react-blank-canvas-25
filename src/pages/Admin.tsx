@@ -36,11 +36,10 @@ type Video = {
   source: string;
 };
 
-type User = {
+type Profile = {
   id: string;
-  email: string;
-  created_at: string;
   role: "admin" | "user";
+  created_at: string;
 };
 
 type Vote = {
@@ -51,9 +50,6 @@ type Vote = {
   created_at: string;
   video: {
     title: string;
-  };
-  user: {
-    email: string;
   };
 };
 
@@ -135,29 +131,16 @@ const Admin = () => {
     enabled: isAdmin,
   });
 
-  const { data: users, isLoading: usersLoading } = useQuery({
-    queryKey: ["admin-users"],
+  const { data: profiles, isLoading: profilesLoading } = useQuery({
+    queryKey: ["admin-profiles"],
     queryFn: async () => {
-      const { data: profiles, error: profilesError } = await supabase
+      const { data, error } = await supabase
         .from("profiles")
-        .select("id, role, created_at");
+        .select("*")
+        .order("created_at", { ascending: false });
 
-      if (profilesError) throw profilesError;
-
-      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
-      if (authError) throw authError;
-
-      const combinedUsers = profiles.map(profile => {
-        const authUser = authUsers.users.find(u => u.id === profile.id);
-        return {
-          id: profile.id,
-          email: authUser?.email || "Unknown",
-          created_at: profile.created_at,
-          role: profile.role,
-        };
-      });
-
-      return combinedUsers as User[];
+      if (error) throw error;
+      return data as Profile[];
     },
     enabled: isAdmin,
   });
@@ -169,8 +152,7 @@ const Admin = () => {
         .from("votes")
         .select(`
           *,
-          video:videos(title),
-          user:profiles(id)
+          video:videos(title)
         `)
         .order("created_at", { ascending: false });
 
@@ -317,7 +299,7 @@ const Admin = () => {
                   <TableRow key={video.id}>
                     <TableCell>{video.title}</TableCell>
                     <TableCell>{video.status}</TableCell>
-                    <TableCell>{new Date(video.created_at).toLocaleDateString('pl-PL')}</TableCell>
+                    <TableCell>{new Date(video.created_at).toLocaleDateString()}</TableCell>
                     <TableCell className="space-x-2">
                       <Button
                         size="sm"
@@ -367,21 +349,21 @@ const Admin = () => {
               <TableCaption>List of all users</TableCaption>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Email</TableHead>
+                  <TableHead>User ID</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Created At</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {usersLoading ? (
+                {profilesLoading ? (
                   <TableRow>
                     <TableCell colSpan={3} className="text-center">Loading...</TableCell>
                   </TableRow>
-                ) : users?.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>{user.role}</TableCell>
-                    <TableCell>{new Date(user.created_at).toLocaleDateString('pl-PL')}</TableCell>
+                ) : profiles?.map((profile) => (
+                  <TableRow key={profile.id}>
+                    <TableCell>{profile.id}</TableCell>
+                    <TableCell>{profile.role}</TableCell>
+                    <TableCell>{new Date(profile.created_at).toLocaleDateString()}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -408,7 +390,7 @@ const Admin = () => {
                   <TableRow key={vote.id}>
                     <TableCell>{vote.video?.title || "Deleted video"}</TableCell>
                     <TableCell>{vote.vote_type ? "Upvote" : "Downvote"}</TableCell>
-                    <TableCell>{new Date(vote.created_at).toLocaleDateString('pl-PL')}</TableCell>
+                    <TableCell>{new Date(vote.created_at).toLocaleDateString()}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
