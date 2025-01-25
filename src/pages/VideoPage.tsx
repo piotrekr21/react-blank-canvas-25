@@ -13,17 +13,15 @@ import { Separator } from "@/components/ui/separator";
 import { ReportLocationModal } from "@/components/ReportLocationModal";
 
 const VideoPage = () => {
-  const { id } = useParams();
+  const { id, slug } = useParams();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [newComment, setNewComment] = useState("");
 
   const { data: video, isLoading: isVideoLoading } = useQuery({
-    queryKey: ['video', id],
+    queryKey: ['video', id, slug],
     queryFn: async () => {
-      if (!id) throw new Error('Video ID is required');
-      
-      const { data, error } = await supabase
+      let query = supabase
         .from('videos')
         .select(`
           *,
@@ -31,14 +29,23 @@ const VideoPage = () => {
             vote_type
           )
         `)
-        .eq('id', id)
-        .eq('status', 'approved')
-        .single();
+        .eq('status', 'approved');
+
+      // If we have a slug, use it; otherwise fall back to id
+      if (slug) {
+        query = query.eq('slug', slug);
+      } else if (id) {
+        query = query.eq('id', id);
+      } else {
+        throw new Error('Either video ID or slug is required');
+      }
+
+      const { data, error } = await query.single();
 
       if (error) throw error;
       return data;
     },
-    enabled: !!id,
+    enabled: !!(id || slug),
   });
 
   const { data: comments, isLoading: areCommentsLoading } = useQuery({
