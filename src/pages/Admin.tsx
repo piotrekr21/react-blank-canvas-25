@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Check, X, Trash, Eye, Edit2 } from "lucide-react";
+import { Check, X, Trash, Eye, Edit2, MapPin } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { GoogleMap, useLoadScript, Marker } from "@react-google-maps/api";
 
 type Video = {
   id: string;
@@ -31,9 +32,9 @@ type Video = {
   description: string | null;
   status: "pending" | "approved" | "rejected";
   created_at: string;
-  user_id: string;
   video_url: string;
-  source: string;
+  latitude: number;
+  longitude: number;
 };
 
 type Profile = {
@@ -53,6 +54,8 @@ type Vote = {
   };
 };
 
+const libraries: ["places"] = ["places"];
+
 const Admin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -63,8 +66,14 @@ const Admin = () => {
   const [editMode, setEditMode] = useState(false);
   const [editedTitle, setEditedTitle] = useState("");
   const [editedDescription, setEditedDescription] = useState("");
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [editedLocation, setEditedLocation] = useState<{ lat: number; lng: number } | null>(null);
 
-  // Check if user is admin
+  const { isLoaded: isMapLoaded } = useLoadScript({
+    googleMapsApiKey: "AIzaSyDWE6xVw-cDOC7Ee0SLFXG-5DueJshQlAA",
+    libraries,
+  });
+
   useEffect(() => {
     const checkAdminStatus = async () => {
       try {
@@ -221,23 +230,27 @@ const Admin = () => {
     setEditedTitle(video.title);
     setEditedDescription(video.description || "");
     setEditMode(false);
-  };
-
-  const handleClosePreview = () => {
-    setSelectedVideo(null);
-    setEditMode(false);
+    setShowLocationPicker(false);
+    setEditedLocation({ lat: Number(video.latitude), lng: Number(video.longitude) });
   };
 
   const handleEditSave = async () => {
     if (!selectedVideo) return;
 
     try {
+      const updateData: Partial<Video> = {
+        title: editedTitle,
+        description: editedDescription,
+      };
+
+      if (editedLocation) {
+        updateData.latitude = editedLocation.lat;
+        updateData.longitude = editedLocation.lng;
+      }
+
       const { error } = await supabase
         .from("videos")
-        .update({
-          title: editedTitle,
-          description: editedDescription,
-        })
+        .update(updateData)
         .eq("id", selectedVideo.id);
 
       if (error) throw error;
@@ -248,12 +261,30 @@ const Admin = () => {
         description: "Video updated successfully",
       });
       setEditMode(false);
-      setSelectedVideo(prev => prev ? { ...prev, title: editedTitle, description: editedDescription } : null);
+      setShowLocationPicker(false);
+      setSelectedVideo(prev => 
+        prev ? { 
+          ...prev, 
+          title: editedTitle, 
+          description: editedDescription,
+          latitude: editedLocation?.lat || prev.latitude,
+          longitude: editedLocation?.lng || prev.longitude,
+        } : null
+      );
     } catch (error) {
       toast({
         title: "Error",
         description: "Failed to update video",
         variant: "destructive",
+      });
+    }
+  };
+
+  const handleMapClick = (e: google.maps.MapMouseEvent) => {
+    if (e.latLng) {
+      setEditedLocation({
+        lat: e.latLng.lat(),
+        lng: e.latLng.lng(),
       });
     }
   };
@@ -411,14 +442,26 @@ const Admin = () => {
                 ) : (
                   selectedVideo?.title
                 )}
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setEditMode(!editMode)}
-                >
-                  <Edit2 className="h-4 w-4 mr-1" />
-                  {editMode ? "Cancel" : "Edit"}
-                </Button>
+                <div className="flex gap-2">
+                  {editMode && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setShowLocationPicker(!showLocationPicker)}
+                    >
+                      <MapPin className="h-4 w-4 mr-1" />
+                      {showLocationPicker ? "Hide Map" : "Edit Location"}
+                    </Button>
+                  )}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setEditMode(!editMode)}
+                  >
+                    <Edit2 className="h-4 w-4 mr-1" />
+                    {editMode ? "Cancel" : "Edit"}
+                  </Button>
+                </div>
               </DialogTitle>
               {editMode && (
                 <DialogDescription>
@@ -432,6 +475,22 @@ const Admin = () => {
               )}
             </DialogHeader>
             <div className="mt-4">
+              {showLocationPicker && isMapLoaded && (
+                <div className="mb-4 h-[300px]">
+                  <GoogleMap
+                    mapContainerStyle={{ width: "100%", height: "100%" }}
+                    center={editedLocation || { lat: 52.2297, lng: 21.0122 }}
+                    zoom={13}
+                    onClick={handleMapClick}
+                  >
+                    {editedLocation && (
+                      <Marker
+                        position={editedLocation}
+                      />
+                    )}
+                  </GoogleMap>
+                </div>
+              )}
               {selectedVideo?.source === 'youtube' ? (
                 <div className="relative w-full pb-[56.25%]">
                   <iframe
@@ -466,7 +525,7 @@ const Admin = () => {
                   <Button
                     onClick={() => {
                       handleVideoStatus(selectedVideo.id, "approved");
-                      handleClosePreview();
+                      setSelectedVideo(null);
                     }}
                   >
                     <Check className="h-4 w-4 mr-1" />
@@ -476,7 +535,7 @@ const Admin = () => {
                     variant="destructive"
                     onClick={() => {
                       handleVideoStatus(selectedVideo.id, "rejected");
-                      handleClosePreview();
+                      setSelectedVideo(null);
                     }}
                   >
                     <X className="h-4 w-4 mr-1" />
