@@ -104,7 +104,7 @@ const VideoPage = () => {
 
   const voteMutation = useMutation({
     mutationFn: async ({ voteType }: { voteType: boolean }) => {
-      if (!id) throw new Error('Video ID is required');
+      if (!video?.id) throw new Error('Video ID is required');
       
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       if (authError || !user) {
@@ -114,7 +114,7 @@ const VideoPage = () => {
       const { data: existingVote, error: fetchError } = await supabase
         .from('votes')
         .select('*')
-        .eq('video_id', id)
+        .eq('video_id', video.id)
         .eq('user_id', user.id)
         .maybeSingle();
 
@@ -138,7 +138,7 @@ const VideoPage = () => {
         const { error } = await supabase
           .from('votes')
           .insert({
-            video_id: id,
+            video_id: video.id,
             user_id: user.id,
             vote_type: voteType,
           });
@@ -146,7 +146,7 @@ const VideoPage = () => {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['video', id] });
+      queryClient.invalidateQueries({ queryKey: ['video', id, slug] });
       toast({
         title: "Sukces",
         description: "Twój głos został zapisany.",
