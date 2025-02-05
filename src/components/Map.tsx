@@ -1,4 +1,5 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+
+import { useState, useCallback, useRef } from "react";
 import { GoogleMap, useLoadScript, Marker, InfoWindow, StandaloneSearchBox } from "@react-google-maps/api";
 import { VideoUploadForm } from "./VideoUploadForm";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -30,22 +31,11 @@ const mapContainerStyle = {
 const libraries: ["places"] = ["places"];
 
 export const Map = ({ onLocationSelect, initialCenter = defaultCenter, zoom = 8 }: MapProps) => {
-  const { toast } = useToast();
-  const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+  // Get Google Maps API key from environment variable supplied by Supabase
+  const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
   
-  useEffect(() => {
-    if (!googleMapsApiKey) {
-      console.error('Google Maps API key is not set');
-      toast({
-        title: "Error",
-        description: "Google Maps API key is not configured properly. Please check the configuration.",
-        variant: "destructive",
-      });
-    }
-  }, [toast]);
-
   const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: googleMapsApiKey || '',
+    googleMapsApiKey,
     libraries,
   });
 
@@ -54,6 +44,7 @@ export const Map = ({ onLocationSelect, initialCenter = defaultCenter, zoom = 8 
   const [mapRef, setMapRef] = useState<google.maps.Map | null>(null);
   const [center, setCenter] = useState(initialCenter);
   const searchBoxRef = useRef<google.maps.places.SearchBox | null>(null);
+  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: videos } = useQuery({
@@ -186,24 +177,13 @@ export const Map = ({ onLocationSelect, initialCenter = defaultCenter, zoom = 8 
     try {
       await voteMutation.mutateAsync({ videoId, voteType });
     } catch (error) {
+      // Error is handled in mutation's onError
       console.error('Vote handling error:', error);
     }
   };
 
-  if (!googleMapsApiKey) {
-    return <div className="p-4 text-red-500">Error: Google Maps configuration is missing</div>;
-  }
-
-  if (loadError) {
-    console.error('Google Maps load error:', loadError);
-    return (
-      <div className="p-4 text-red-500">
-        Error loading Google Maps. Please check your API key configuration and network connection.
-      </div>
-    );
-  }
-  
-  if (!isLoaded) return <div className="p-4">Loading maps...</div>;
+  if (loadError) return <div>Error loading maps</div>;
+  if (!isLoaded) return <div>Loading maps...</div>;
 
   return (
     <div className="space-y-4">
