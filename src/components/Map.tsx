@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useRef } from "react";
 import { GoogleMap, useLoadScript, Marker, InfoWindow, StandaloneSearchBox } from "@react-google-maps/api";
 import { VideoUploadForm } from "./VideoUploadForm";
@@ -30,8 +31,11 @@ const mapContainerStyle = {
 const libraries: ["places"] = ["places"];
 
 export const Map = ({ onLocationSelect, initialCenter = defaultCenter, zoom = 8 }: MapProps) => {
+  // Get Google Maps API key from environment variable supplied by Supabase
+  const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
+  
   const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: "AIzaSyDWE6xVw-cDOC7Ee0SLFXG-5DueJshQlAA",
+    googleMapsApiKey,
     libraries,
   });
 
