@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { GoogleMap, useLoadScript, Marker, InfoWindow, StandaloneSearchBox } from "@react-google-maps/api";
 import { VideoUploadForm } from "./VideoUploadForm";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -31,22 +31,21 @@ const libraries: ["places"] = ["places"];
 
 export const Map = ({ onLocationSelect, initialCenter = defaultCenter, zoom = 8 }: MapProps) => {
   const { toast } = useToast();
-  
-  // Get Google Maps API key from environment variable supplied by Supabase
   const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
   
-  if (!googleMapsApiKey) {
-    console.error('Google Maps API key is not set');
-    toast({
-      title: "Error",
-      description: "Google Maps API key is not configured properly. Please check the configuration.",
-      variant: "destructive",
-    });
-    return <div className="p-4 text-red-500">Error: Google Maps configuration is missing</div>;
-  }
+  useEffect(() => {
+    if (!googleMapsApiKey) {
+      console.error('Google Maps API key is not set');
+      toast({
+        title: "Error",
+        description: "Google Maps API key is not configured properly. Please check the configuration.",
+        variant: "destructive",
+      });
+    }
+  }, [toast]);
 
   const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey,
+    googleMapsApiKey: googleMapsApiKey || '',
     libraries,
   });
 
@@ -187,10 +186,13 @@ export const Map = ({ onLocationSelect, initialCenter = defaultCenter, zoom = 8 
     try {
       await voteMutation.mutateAsync({ videoId, voteType });
     } catch (error) {
-      // Error is handled in mutation's onError
       console.error('Vote handling error:', error);
     }
   };
+
+  if (!googleMapsApiKey) {
+    return <div className="p-4 text-red-500">Error: Google Maps configuration is missing</div>;
+  }
 
   if (loadError) {
     console.error('Google Maps load error:', loadError);
