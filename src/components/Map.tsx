@@ -32,7 +32,7 @@ const libraries: ["places"] = ["places"];
 export const Map = ({ onLocationSelect, initialCenter = defaultCenter, zoom = 8 }: MapProps) => {
   const [apiKey, setApiKey] = useState<string>("");
   const { toast } = useToast();
-  const markersRef = useRef<Map<string, google.maps.marker.AdvancedMarkerElement>>(new window.Map());
+  const markersRef = useRef<Map<string, google.maps.Marker>>(new window.Map());
 
   useEffect(() => {
     const fetchApiKey = async () => {
@@ -203,27 +203,22 @@ export const Map = ({ onLocationSelect, initialCenter = defaultCenter, zoom = 8 
     if (isLoaded && mapRef && videos) {
       // Clear existing markers
       markersRef.current.forEach((marker) => {
-        if (marker && typeof marker.setMap === 'function') {
-          marker.setMap(null);
-        }
+        marker.setMap(null);
       });
       markersRef.current.clear();
 
       // Add new markers
       videos.forEach(video => {
         const position = { lat: Number(video.latitude), lng: Number(video.longitude) };
-        const marker = new google.maps.marker.AdvancedMarkerElement({
+        const marker = new google.maps.Marker({
           map: mapRef,
           position,
           title: video.title,
         });
 
-        // Add click listener using the correct method
-        if (marker) {
-          marker.addEventListener('click', () => {
-            setSelectedVideo(video);
-          });
-        }
+        marker.addListener('click', () => {
+          setSelectedVideo(video);
+        });
 
         markersRef.current.set(video.id, marker);
       });
