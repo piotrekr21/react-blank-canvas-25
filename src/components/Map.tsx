@@ -32,22 +32,14 @@ const libraries: ["places"] = ["places"];
 export const Map = ({ onLocationSelect, initialCenter = defaultCenter, zoom = 8 }: MapProps) => {
   const [apiKey, setApiKey] = useState<string>("");
   const { toast } = useToast();
+  const markersRef = useRef<Map<string, google.maps.marker.AdvancedMarkerElement>>(new Map());
 
   useEffect(() => {
     const fetchApiKey = async () => {
       try {
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        if (!user) {
-          // If user is not logged in, use the anon key functionality
-          const { data: functionData, error: functionError } = await supabase.functions.invoke('get-maps-key');
-          if (functionError) throw functionError;
-          setApiKey(functionData.apiKey);
-        } else {
-          // If user is logged in, they can access the key directly
-          const { data: functionData, error: functionError } = await supabase.functions.invoke('get-maps-key');
-          if (functionError) throw functionError;
-          setApiKey(functionData.apiKey);
-        }
+        const { data: functionData, error: functionError } = await supabase.functions.invoke('get-maps-key');
+        if (functionError) throw functionError;
+        setApiKey(functionData.apiKey);
       } catch (error) {
         console.error('Error fetching API key:', error);
         toast({
@@ -203,10 +195,31 @@ export const Map = ({ onLocationSelect, initialCenter = defaultCenter, zoom = 8 
     try {
       await voteMutation.mutateAsync({ videoId, voteType });
     } catch (error) {
-      // Error is handled in mutation's onError
       console.error('Vote handling error:', error);
     }
   };
+
+  useEffect(() => {
+    if (isLoaded && mapRef && videos) {
+      markersRef.current.forEach(marker => marker.setMap(null));
+      markersRef.current.clear();
+
+      videos.forEach(video => {
+        const position = { lat: Number(video.latitude), lng: Number(video.longitude) };
+        const marker = new google.maps.marker.AdvancedMarkerElement({
+          map: mapRef,
+          position,
+          title: video.title,
+        });
+
+        marker.addListener('click', () => {
+          setSelectedVideo(video);
+        });
+
+        markersRef.current.set(video.id, marker);
+      });
+    }
+  }, [isLoaded, mapRef, videos]);
 
   if (loadError) return <div>Error loading maps</div>;
   if (!isLoaded || !apiKey) return <div>Loading maps...</div>;
@@ -232,14 +245,6 @@ export const Map = ({ onLocationSelect, initialCenter = defaultCenter, zoom = 8 
           onClick={handleMapClick}
           onLoad={onMapLoad}
         >
-          {videos?.map((video) => (
-            <Marker
-              key={video.id}
-              position={{ lat: Number(video.latitude), lng: Number(video.longitude) }}
-              onClick={() => setSelectedVideo(video)}
-            />
-          ))}
-
           {selectedLocation && onLocationSelect && (
             <Marker
               position={selectedLocation}
