@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { GoogleMap, useLoadScript, Marker, InfoWindow, StandaloneSearchBox } from "@react-google-maps/api";
 import { VideoUploadForm } from "./VideoUploadForm";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -30,8 +30,39 @@ const mapContainerStyle = {
 const libraries: ["places"] = ["places"];
 
 export const Map = ({ onLocationSelect, initialCenter = defaultCenter, zoom = 8 }: MapProps) => {
+  const [apiKey, setApiKey] = useState<string>("");
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchApiKey = async () => {
+      try {
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (!user) {
+          // If user is not logged in, use the anon key functionality
+          const { data: functionData, error: functionError } = await supabase.functions.invoke('get-maps-key');
+          if (functionError) throw functionError;
+          setApiKey(functionData.apiKey);
+        } else {
+          // If user is logged in, they can access the key directly
+          const { data: functionData, error: functionError } = await supabase.functions.invoke('get-maps-key');
+          if (functionError) throw functionError;
+          setApiKey(functionData.apiKey);
+        }
+      } catch (error) {
+        console.error('Error fetching API key:', error);
+        toast({
+          title: "Error",
+          description: "Could not load Google Maps. Please try again later.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    fetchApiKey();
+  }, [toast]);
+
   const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: "AIzaSyDWE6xVw-cDOC7Ee0SLFXG-5DueJshQlAA",
+    googleMapsApiKey: apiKey,
     libraries,
   });
 
@@ -40,7 +71,6 @@ export const Map = ({ onLocationSelect, initialCenter = defaultCenter, zoom = 8 
   const [mapRef, setMapRef] = useState<google.maps.Map | null>(null);
   const [center, setCenter] = useState(initialCenter);
   const searchBoxRef = useRef<google.maps.places.SearchBox | null>(null);
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: videos } = useQuery({
@@ -179,7 +209,7 @@ export const Map = ({ onLocationSelect, initialCenter = defaultCenter, zoom = 8 
   };
 
   if (loadError) return <div>Error loading maps</div>;
-  if (!isLoaded) return <div>Loading maps...</div>;
+  if (!isLoaded || !apiKey) return <div>Loading maps...</div>;
 
   return (
     <div className="space-y-4">
